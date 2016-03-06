@@ -20,6 +20,8 @@ NOTE: when wiring the male connector for the shifter, remember that the pins wil
 
 ## Firmware
 
+Install [this dude's Arduino Joystick library](https://github.com/MHeironimus/ArduinoJoystickLibrary).
+
 Open the .ino file in the Arduino IDE, select the proper board type and COM port under "Tools" (you will need to install the [SparkFun board library](https://github.com/sparkfun/Arduino_Boards)).  You will probably need to adjust the thresholds for SHIFTER_XAXIS_12 and friends, the values that decide which gear you're in based on the x/y axis of the shifter.  Uncomment the `#define DEBUG_SHIFTER true` line near the top to get debugging information to aid in this process.
 
 ## Calibration and Configration
