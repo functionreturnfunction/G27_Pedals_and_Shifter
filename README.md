@@ -1,5 +1,10 @@
 # G27 Pedals and Shifter
 
+Arduino-based USB interface for Logitech G27 pedals and shifter:
+
+![on breadboard](https://raw.githubusercontent.com/functionreturnfunction/G27_Pedals_and_Shifter/master/Breadboard.jpg)
+![in altoids tin](https://raw.githubusercontent.com/functionreturnfunction/G27_Pedals_and_Shifter/master/Altoids Tin.jpg)
+
 ## Required Parts/Materials
 
 * [SparkFun Pro Micro](https://www.sparkfun.com/products/12640) or clone (must be a 5V/16MHz ATmega32U4 with onboard USB)
