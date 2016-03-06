@@ -329,9 +329,8 @@ void describeButtonStates(int buttons[], int shifterPosition[], int gear) {
 }
 
 void setup() {
-#if defined(DEBUG_PEDALS) || defined(DEBUG_SHIFTER)
-  Serial.begin(9600);
-#else
+  Serial.begin(38400);
+#if !defined(DEBUG_PEDALS) && !defined(DEBUG_SHIFTER)
   Joystick.begin(false);
 #endif
 
