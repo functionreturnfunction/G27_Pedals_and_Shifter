@@ -18,6 +18,12 @@ Connect the female DB9 connector for the pedals to the board using the pins in t
 
 NOTE: when wiring the male connector for the shifter, remember that the pins will read right to left rather than left to right.
 
-## Software
+## Firmware
 
 Open the .ino file in the Arduino IDE, select the proper board type and COM port under "Tools" (you will need to install the [SparkFun board library](https://github.com/sparkfun/Arduino_Boards)).  You will probably need to adjust the thresholds for SHIFTER_XAXIS_12 and friends, the values that decide which gear you're in based on the x/y axis of the shifter.  Uncomment the `#define DEBUG_SHIFTER true` line near the top to get debugging information to aid in this process.
+
+## Calibration and Configration
+
+The pedals are self-calibrating, meaning the system determines the min/max value for each pedal in realtime.  What this means is that each time the device is powered on, you'll need to push each of the three pedals all the way to the floor once to let it know what the maximums are.
+
+When configuring the shifter and buttons, gears 1 - 6 are buttons 1 - 6, reverse is button 7, and then the rest of the buttons enumerate from there starting from the top black button.
