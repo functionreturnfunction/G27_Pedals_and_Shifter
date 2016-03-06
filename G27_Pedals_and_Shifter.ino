@@ -1,3 +1,9 @@
+// G27_Pedals_and_Shifter.ino
+// by Jason Duncan
+
+// Partially adapted from the work done by isrtv.com forums members pascalh and xxValiumxx:
+// http://www.isrtv.com/forums/topic/13189-diy-g25-shifter-interface-with-h-pattern-sequential-and-handbrake-modes/
+
 #include "Joystick.h"
 
 // for debugging, gives serial output rather than working as a joystick
