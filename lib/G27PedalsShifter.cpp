@@ -25,7 +25,7 @@
 #if defined(_USING_HID)
 
 #define G27_REPORT_ID 0x03
-#define G27_STATE_SIZE 9
+#define G27_STATE_SIZE 7
 
 static const uint8_t _hidReportDescriptor[] PROGMEM = {
 	// Joystick
@@ -34,14 +34,14 @@ static const uint8_t _hidReportDescriptor[] PROGMEM = {
 	0xa1, 0x01,			      // COLLECTION (Application)
 	0x85, G27_REPORT_ID,                  //   REPORT_ID (3)
 
-	// 24 Buttons
+	// 19 Buttons
 	0x05, 0x09,			      //   USAGE_PAGE (Button)
 	0x19, 0x01,			      //   USAGE_MINIMUM (Button 1)
-	0x29, 0x18,			      //   USAGE_MAXIMUM (Button 24)
+	0x29, 0x13,			      //   USAGE_MAXIMUM (Button 19)
 	0x15, 0x00,			      //   LOGICAL_MINIMUM (0)
 	0x25, 0x01,			      //   LOGICAL_MAXIMUM (1)
 	0x75, 0x01,			      //   REPORT_SIZE (1)
-	0x95, 0x18,			      //   REPORT_COUNT (24)
+	0x95, 0x13,			      //   REPORT_COUNT (19)
 	0x55, 0x00,			      //   UNIT_EXPONENT (0)
 	0x65, 0x00,			      //   UNIT (None)
 	0x81, 0x02,			      //   INPUT (Data,Var,Abs)
@@ -50,7 +50,7 @@ static const uint8_t _hidReportDescriptor[] PROGMEM = {
 	0x05, 0x01,			      //   USAGE_PAGE (Generic Desktop)
 	0x15, 0x00,			      //   LOGICAL_MINIMUM (0)
 	0x26, 0xff, 0x03,       	      //   LOGICAL_MAXIMUM (1023)
-	0x75, 0x10,			      //   REPORT_SIZE (16)
+	0x75, 0x10,			      //   REPORT_SIZE (10)
 	0x09, 0x01,			      //   USAGE (Pointer)
 	0xA1, 0x00,			      //   COLLECTION (Physical)
 	0x09, 0x30,		              //     USAGE (x)
@@ -59,6 +59,11 @@ static const uint8_t _hidReportDescriptor[] PROGMEM = {
 	0x95, 0x03,		              //     REPORT_COUNT (3)
 	0x81, 0x02,		              //     INPUT (Data,Var,Abs)
 	0xc0,				      //   END_COLLECTION
+
+        // 7 constant bits
+	0x75, 0x01,			      //   REPORT_SIZE (1)
+	0x95, 0x07,			      //   REPORT_COUNT (7)
+	0x81, 0x01,			      //   INPUT (Cnst,Ary,Abs)
 
 	0xc0				      // END_COLLECTION
 };
@@ -129,28 +134,61 @@ void G27_::sendState()
 	uint8_t data[G27_STATE_SIZE];
 	uint32_t tmp = buttons;
 
-	// Split 24 bit button-state into 3 bytes
+        // this worked for the old report
+	// // Split 24 bit button-state into 3 bytes
+	// data[0] = tmp & 0xFF;
+	// tmp >>= 8;
+	// data[1] = tmp & 0xFF;
+	// tmp >>= 8;
+	// data[2] = tmp & 0xFF;
+
+        // // axis get 2 bytes each
+        // tmp = xAxis;
+        // data[3] = tmp & 0xFF;
+        // tmp >>=8;
+        // data[4] = tmp & 0xFF;
+
+        // tmp = yAxis;
+        // data[5] = tmp & 0xFF;
+        // tmp >>=8;
+        // data[6] = tmp & 0xFF;
+
+        // tmp = zAxis;
+        // data[7] = tmp & 0xFF;
+        // tmp >>=8;
+        // data[8] = tmp & 0xFF;
+
+        // Split 19 bit button-state into 3 bytes
 	data[0] = tmp & 0xFF;
 	tmp >>= 8;
 	data[1] = tmp & 0xFF;
 	tmp >>= 8;
-	data[2] = tmp & 0xFF;
+	data[2] = tmp & 0x07;
 
-        // axis get 2 bytes each
+
+        // xAxis gets 5 bits on data[2] and 5 bits on data[3]
         tmp = xAxis;
-        data[3] = tmp & 0xFF;
-        tmp >>=8;
-        data[4] = tmp & 0xFF;
+        data[2] <<= 5;
+        data[2] += tmp & 0x1F;
+        tmp >>= 5;
+        data[3] = tmp & 0x1F;
 
+        // yAxis gets 3 bits on data[3] and 7 bits on data[4]
         tmp = yAxis;
-        data[5] = tmp & 0xFF;
-        tmp >>=8;
-        data[6] = tmp & 0xFF;
+        data[3] <<= 5;
+        data[3] += tmp & 0x07;
+        tmp >>= 3;
+        data[4] = tmp & 0x7F;
 
+        // zAxis gets 1 bit on data[4], 8 bits on data[5], and 1 bit on data[6]
         tmp = zAxis;
-        data[7] = tmp & 0xFF;
-        tmp >>=8;
-        data[8] = tmp & 0xFF;
+        data[4] <<= 1;
+        data[4] += tmp & 0x01;
+        tmp >>= 1;
+        data[5] = tmp & 0xFF;
+        tmp >>= 8;
+        data[6] = tmp & 0x01;
+        data[6] <<= 7;
 
 	// HID().SendReport(Report number, array of values in same order as HID descriptor, length)
 	HID().SendReport(G27_REPORT_ID, data, G27_STATE_SIZE);
