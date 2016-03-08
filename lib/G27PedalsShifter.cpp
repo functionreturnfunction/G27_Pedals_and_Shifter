@@ -58,12 +58,12 @@ static const uint8_t _hidReportDescriptor[] PROGMEM = {
 	0x09, 0x32,		              //     USAGE (z)
 	0x95, 0x03,		              //     REPORT_COUNT (3)
 	0x81, 0x02,		              //     INPUT (Data,Var,Abs)
+        // 7 constant bits
+	0x75, 0x01,			      //     REPORT_SIZE (1)
+	0x95, 0x07,			      //     REPORT_COUNT (7)
+	0x81, 0x01,			      //     INPUT (Cnst,Ary,Abs)
 	0xc0,				      //   END_COLLECTION
 
-        // 7 constant bits
-	0x75, 0x01,			      //   REPORT_SIZE (1)
-	0x95, 0x07,			      //   REPORT_COUNT (7)
-	0x81, 0x01,			      //   INPUT (Cnst,Ary,Abs)
 
 	0xc0				      // END_COLLECTION
 };
@@ -159,35 +159,27 @@ void G27_::sendState()
         // data[8] = tmp & 0xFF;
 
         // Split 19 bit button-state into 3 bytes
-	data[0] = tmp & 0xFF;
-	tmp >>= 8;
-	data[1] = tmp & 0xFF;
-	tmp >>= 8;
-	data[2] = tmp & 0x07;
-
+        data[0] = tmp & 0xFF;
+        tmp >>= 8;
+        data[1] = tmp & 0xFF;
+        tmp >>= 8;
+        data[2] = tmp & 0x07;
 
         // xAxis gets 5 bits on data[2] and 5 bits on data[3]
-        tmp = xAxis;
         data[2] <<= 5;
-        data[2] += tmp & 0x1F;
-        tmp >>= 5;
-        data[3] = tmp & 0x1F;
+        data[2] += (xAxis & 0x3E0) >> 5;
+        data[3] = xAxis & 0x1F;
+        data[3] <<= 3;
 
         // yAxis gets 3 bits on data[3] and 7 bits on data[4]
-        tmp = yAxis;
-        data[3] <<= 5;
-        data[3] += tmp & 0x07;
-        tmp >>= 3;
-        data[4] = tmp & 0x7F;
+        data[3] += (yAxis & 0x380) >> 7;
+        data[4] = yAxis & 0x7F;
+        data[4] <<= 1;
 
         // zAxis gets 1 bit on data[4], 8 bits on data[5], and 1 bit on data[6]
-        tmp = zAxis;
-        data[4] <<= 1;
-        data[4] += tmp & 0x01;
-        tmp >>= 1;
-        data[5] = tmp & 0xFF;
-        tmp >>= 8;
-        data[6] = tmp & 0x01;
+        data[4] += zAxis & 0x01;
+        data[5] = (zAxis & 0x1FE) >> 1;
+        data[6] = zAxis & 0x01;
         data[6] <<= 7;
 
 	// HID().SendReport(Report number, array of values in same order as HID descriptor, length)
