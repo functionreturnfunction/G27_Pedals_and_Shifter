@@ -20,8 +20,8 @@
 
 // (stolen from Matthew Heironimus @ https://github.com/MHeironimus/ArduinoJoystickLibrary)
 
-#ifndef G_h
-#define G_h
+#ifndef G27_h
+#define G27_h
 
 #include "HID.h"
 
@@ -35,7 +35,7 @@
 //================================================================================
 //  G27 (Gamepad)
 
-class G_
+class G27_
 {
 private:
 	bool     autoSendState;
@@ -45,7 +45,7 @@ private:
 	uint32_t buttons;
 
 public:
-	G_();
+	G27_();
 
 	void begin(bool initAutoSendState = true);
 	void end();
@@ -60,7 +60,7 @@ public:
 
 	void sendState();
 };
-extern G_ G;
+extern G27_ G27;
 
 #endif
 #endif

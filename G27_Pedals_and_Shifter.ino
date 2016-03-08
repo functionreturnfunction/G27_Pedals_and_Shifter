@@ -4,7 +4,8 @@
 // Partially adapted from the work done by isrtv.com forums members pascalh and xxValiumxx:
 // http://www.isrtv.com/forums/topic/13189-diy-g25-shifter-interface-with-h-pattern-sequential-and-handbrake-modes/
 
-#include "G27PedalsShifter.h"
+#include <HID.h>
+#include "./lib/G27PedalsShifter.h"
 
 // for debugging, gives serial output rather than working as a joystick
 //#define DEBUG true
@@ -163,17 +164,17 @@ void describePedal(char* name, char* axisName, void* in) {
 
 void setXAxis(void* in) {
   Pedal* input = (Pedal*)in;
-  G.setXAxis(input->axis);
+  G27.setXAxis(input->axis);
 }
 
 void setYAxis(void* in) {
   Pedal* input = (Pedal*)in;
-  G.setYAxis(input->axis);
+  G27.setYAxis(input->axis);
 }
 
 void setZAxis(void* in) {
   Pedal* input = (Pedal*)in;
-  G.setZAxis(input->axis);
+  G27.setZAxis(input->axis);
 }
 
 void pedalColor(void* inGas, void* inBrake, void* inClutch){
@@ -269,15 +270,15 @@ int getCurrentGear(int shifterPosition[], int btns[]) {
 void setButtonStates(int buttons[], int gear) {
   // release virtual buttons for all gears
   for (byte i = 0; i < 7; ++i) {
-    G.setButton(i, LOW);
+    G27.setButton(i, LOW);
   }
 
   if (gear > 0) {
-    G.setButton(gear - 1, HIGH);
+    G27.setButton(gear - 1, HIGH);
   }
 
   for (byte i = BUTTON_RED_CENTERRIGHT; i <= BUTTON_DPAD_TOP; ++i) {
-    G.setButton(buttonTable[i], buttons[i]);
+    G27.setButton(buttonTable[i], buttons[i]);
   }
 }
 
@@ -338,7 +339,7 @@ void describeButtonStates(int buttons[], int shifterPosition[], int gear) {
 void setup() {
   Serial.begin(38400);
 #if !defined(DEBUG_PEDALS) && !defined(DEBUG_SHIFTER)
-  G.begin(false);
+  G27.begin(false);
 #endif
 
   // lights
@@ -398,7 +399,7 @@ void loop() {
   describeButtonStates(buttonStates, shifterPosition, gear);
 #else
   setButtonStates(buttonStates, gear);
-  G.sendState();
+  G27.sendState();
 #endif
 
 #if defined(DEBUG_PEDALS) || defined(DEBUG_SHIFTER)

@@ -24,24 +24,24 @@
 
 #if defined(_USING_HID)
 
-#define G_REPORT_ID 0x03
-#define G_STATE_SIZE 10
+#define G27_REPORT_ID 0x03
+#define G27_STATE_SIZE 9
 
 static const uint8_t _hidReportDescriptor[] PROGMEM = {
 	// Joystick
 	0x05, 0x01,			      // USAGE_PAGE (Generic Desktop)
 	0x09, 0x04,			      // USAGE (Joystick)
 	0xa1, 0x01,			      // COLLECTION (Application)
-	0x85, G_REPORT_ID,                  //   REPORT_ID (3)
+	0x85, G27_REPORT_ID,                  //   REPORT_ID (3)
 
-	// 32 Buttons
+	// 24 Buttons
 	0x05, 0x09,			      //   USAGE_PAGE (Button)
 	0x19, 0x01,			      //   USAGE_MINIMUM (Button 1)
-	0x29, 0x20,			      //   USAGE_MAXIMUM (Button 32)
+	0x29, 0x18,			      //   USAGE_MAXIMUM (Button 24)
 	0x15, 0x00,			      //   LOGICAL_MINIMUM (0)
 	0x25, 0x01,			      //   LOGICAL_MAXIMUM (1)
 	0x75, 0x01,			      //   REPORT_SIZE (1)
-	0x95, 0x20,			      //   REPORT_COUNT (32)
+	0x95, 0x18,			      //   REPORT_COUNT (24)
 	0x55, 0x00,			      //   UNIT_EXPONENT (0)
 	0x65, 0x00,			      //   UNIT (None)
 	0x81, 0x02,			      //   INPUT (Data,Var,Abs)
@@ -63,7 +63,7 @@ static const uint8_t _hidReportDescriptor[] PROGMEM = {
 	0xc0				      // END_COLLECTION
 };
 
-G_::G_()
+G27_::G27_()
 {
 	// Setup HID report structure
 	static HIDSubDescriptor node(_hidReportDescriptor, sizeof(_hidReportDescriptor));
@@ -76,17 +76,17 @@ G_::G_()
 	buttons = 0;
 }
 
-void G_::begin(bool initAutoSendState)
+void G27_::begin(bool initAutoSendState)
 {
 	autoSendState = initAutoSendState;
 	sendState();
 }
 
-void G_::end()
+void G27_::end()
 {
 }
 
-void G_::setButton(uint8_t button, uint8_t value)
+void G27_::setButton(uint8_t button, uint8_t value)
 {
 	if (value == 0)
 	{
@@ -97,67 +97,65 @@ void G_::setButton(uint8_t button, uint8_t value)
 		pressButton(button);
 	}
 }
-void G_::pressButton(uint8_t button)
+void G27_::pressButton(uint8_t button)
 {
 	bitSet(buttons, button);
 	if (autoSendState) sendState();
 }
-void G_::releaseButton(uint8_t button)
+void G27_::releaseButton(uint8_t button)
 {
 	bitClear(buttons, button);
 	if (autoSendState) sendState();
 }
 
-void G_::setXAxis(uint16_t value)
+void G27_::setXAxis(uint16_t value)
 {
 	xAxis = value;
 	if (autoSendState) sendState();
 }
-void G_::setYAxis(uint16_t value)
+void G27_::setYAxis(uint16_t value)
 {
 	yAxis = value;
 	if (autoSendState) sendState();
 }
-void G_::setZAxis(uint16_t value)
+void G27_::setZAxis(uint16_t value)
 {
 	zAxis = value;
 	if (autoSendState) sendState();
 }
 
-void G_::sendState()
+void G27_::sendState()
 {
-	uint8_t data[G_STATE_SIZE];
+	uint8_t data[G27_STATE_SIZE];
 	uint32_t tmp = buttons;
 
-	// Split 32 bit button-state into 4 bytes
+	// Split 24 bit button-state into 3 bytes
 	data[0] = tmp & 0xFF;
 	tmp >>= 8;
 	data[1] = tmp & 0xFF;
 	tmp >>= 8;
 	data[2] = tmp & 0xFF;
-	tmp >>= 8;
-	data[3] = tmp & 0xFF;
 
         // axis get 2 bytes each
         tmp = xAxis;
-        data[4] = tmp & 0xFF;
+        data[3] = tmp & 0xFF;
         tmp >>=8;
-        data[5] = tmp & 0xFF;
+        data[4] = tmp & 0xFF;
 
         tmp = yAxis;
-        data[6] = tmp & 0xFF;
+        data[5] = tmp & 0xFF;
         tmp >>=8;
-        data[7] = tmp & 0xFF;
+        data[6] = tmp & 0xFF;
 
         tmp = zAxis;
-        data[8] = tmp & 0xFF;
+        data[7] = tmp & 0xFF;
         tmp >>=8;
-        data[9] = tmp & 0xFF;
+        data[8] = tmp & 0xFF;
 
 	// HID().SendReport(Report number, array of values in same order as HID descriptor, length)
-	HID().SendReport(G_REPORT_ID, data, G_STATE_SIZE);
+	HID().SendReport(G27_REPORT_ID, data, G27_STATE_SIZE);
 }
 
-G_ G;
+G27_ G27;
 
 #endif
