@@ -4,7 +4,7 @@
 // Partially adapted from the work done by isrtv.com forums members pascalh and xxValiumxx:
 // http://www.isrtv.com/forums/topic/13189-diy-g25-shifter-interface-with-h-pattern-sequential-and-handbrake-modes/
 
-#include "Joystick.h"
+#include "G27PedalsShifter.h"
 
 // for debugging, gives serial output rather than working as a joystick
 //#define DEBUG true
@@ -93,12 +93,13 @@
 #define SHIFTER_YAXIS_246       300 //Gears 2,4,6, R
 
 // MISC.
-#define MAX_AXIS            127
+#define MAX_AXIS            1023
 #define SIGNAL_SETTLE_DELAY 10
 
 // PEDAL CODE
 typedef struct pedal {
-  int pin, min, max, cur, axis;
+  byte pin;
+  int min, max, cur, axis;
 };
 
 typedef struct pedal Pedal;
@@ -112,7 +113,7 @@ int axisValue(void* in) {
 
   int range = input->max - input->min;
   if (range == 0) {
-    return -MAX_AXIS;
+    return 0;
   }
 
   long step1 = input->cur - input->min;
@@ -120,8 +121,8 @@ int axisValue(void* in) {
   float step3 = step2 / range;
   int result = step3 - MAX_AXIS;
 
-  if (result < -MAX_AXIS) {
-    return -MAX_AXIS;
+  if (result < 0) {
+    return 0;
   }
   if (result > MAX_AXIS) {
     return MAX_AXIS;
@@ -162,17 +163,17 @@ void describePedal(char* name, char* axisName, void* in) {
 
 void setXAxis(void* in) {
   Pedal* input = (Pedal*)in;
-  Joystick.setXAxis(input->axis);
+  G.setXAxis(input->axis);
 }
 
 void setYAxis(void* in) {
   Pedal* input = (Pedal*)in;
-  Joystick.setYAxis(input->axis);
+  G.setYAxis(input->axis);
 }
 
 void setZAxis(void* in) {
   Pedal* input = (Pedal*)in;
-  Joystick.setZAxis(input->axis);
+  G.setZAxis(input->axis);
 }
 
 void pedalColor(void* inGas, void* inBrake, void* inClutch){
@@ -268,15 +269,15 @@ int getCurrentGear(int shifterPosition[], int btns[]) {
 void setButtonStates(int buttons[], int gear) {
   // release virtual buttons for all gears
   for (byte i = 0; i < 7; ++i) {
-    Joystick.setButton(i, LOW);
+    G.setButton(i, LOW);
   }
 
   if (gear > 0) {
-    Joystick.setButton(gear - 1, HIGH);
+    G.setButton(gear - 1, HIGH);
   }
 
   for (byte i = BUTTON_RED_CENTERRIGHT; i <= BUTTON_DPAD_TOP; ++i) {
-    Joystick.setButton(buttonTable[i], buttons[i]);
+    G.setButton(buttonTable[i], buttons[i]);
   }
 }
 
@@ -337,7 +338,7 @@ void describeButtonStates(int buttons[], int shifterPosition[], int gear) {
 void setup() {
   Serial.begin(38400);
 #if !defined(DEBUG_PEDALS) && !defined(DEBUG_SHIFTER)
-  Joystick.begin(false);
+  G.begin(false);
 #endif
 
   // lights
@@ -397,7 +398,7 @@ void loop() {
   describeButtonStates(buttonStates, shifterPosition, gear);
 #else
   setButtonStates(buttonStates, gear);
-  Joystick.sendState();
+  G.sendState();
 #endif
 
 #if defined(DEBUG_PEDALS) || defined(DEBUG_SHIFTER)
