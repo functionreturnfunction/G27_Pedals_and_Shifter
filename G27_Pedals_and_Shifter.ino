@@ -337,8 +337,9 @@ void describeButtonStates(int buttons[], int shifterPosition[], int gear) {
 }
 
 void setup() {
+#if defined(DEBUG_PEDALS) || defined(DEBUG_SHIFTER)
   Serial.begin(38400);
-#if !defined(DEBUG_PEDALS) && !defined(DEBUG_SHIFTER)
+#else
   G27.begin(false);
 #endif
 

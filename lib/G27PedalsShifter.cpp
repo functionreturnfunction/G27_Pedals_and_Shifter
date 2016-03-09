@@ -170,17 +170,17 @@ void G27_::sendState()
         tmp >>= 8;
         data[2] = (tmp & 0xFF) << 5;
 
-        // data[3] is the top 8 bits from xAxis
-        data[3] = (xAxis & 0b1111111100) >> 2;
+        // data[3] is the bottom 8 bits from xAxis
+        data[3] = xAxis & 0b11111111;
 
-        // data[4] is the bottom 2 bits from xAxis and the top 6 bits from yAxis
-        data[4] = ((xAxis & 0b11) << 6)  | ((yAxis & 0b1111110000) >> 4);
+        // data[4] is the top 2 bits from xAxis and the bottom 6 bits from yAxis
+        data[4] = ((xAxis & 0b1100000000) >> 2)  | (yAxis & 0b111111);
 
-        // data[5] is the bottom 4 bits from yAxis and the top 4 bits from zAxis
-        data[5] = ((yAxis & 0b1111) << 4) | ((zAxis & 0b1111000000) >> 6);
+        // data[5] is the top 4 bits from yAxis and the bottom 4 bits from zAxis
+        data[5] = ((yAxis & 0b1111000000) >> 2) | (zAxis & 0b1111);
 
-        // data[6] is the bottom 6 bits from zAxis
-        data[6] = (zAxis & 0b111111) << 2;
+        // data[6] is the top 6 bits from zAxis
+        data[6] = (zAxis & 0b1111110000) >> 2;
 
 	// HID().SendReport(Report number, array of values in same order as HID descriptor, length)
 	HID().SendReport(G27_REPORT_ID, data, G27_STATE_SIZE);
