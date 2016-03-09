@@ -46,6 +46,11 @@ static const uint8_t _hidReportDescriptor[] PROGMEM = {
 	0x65, 0x00,			      //   UNIT (None)
 	0x81, 0x02,			      //   INPUT (Data,Var,Abs)
 
+        // 5 constant bits
+	0x75, 0x05,			      //   REPORT_SIZE (5)
+	0x95, 0x01,			      //   REPORT_COUNT (1)
+	0x81, 0x03,			      //   INPUT (Cnst,Var,Abs)
+
 	// X, Y, and Z Axis
 	0x05, 0x01,			      //   USAGE_PAGE (Generic Desktop)
 	0x15, 0x00,			      //   LOGICAL_MINIMUM (0)
@@ -60,10 +65,10 @@ static const uint8_t _hidReportDescriptor[] PROGMEM = {
 	0x81, 0x02,		              //     INPUT (Data,Var,Abs)
 	0xc0,				      //   END_COLLECTION
 
-        // 7 constant bits
-	0x75, 0x01,			      //     REPORT_SIZE (1)
-	0x95, 0x07,			      //     REPORT_COUNT (7)
-	0x81, 0x01,			      //     INPUT (Cnst,Ary,Abs)
+        // 2 constant bits
+	0x75, 0x02,			      //   REPORT_SIZE (2)
+	0x95, 0x01,			      //   REPORT_COUNT (1)
+	0x81, 0x03,			      //   INPUT (Cnst,Var,Abs)
 
 	0xc0				      // END_COLLECTION
 };
@@ -163,21 +168,19 @@ void G27_::sendState()
         tmp >>= 8;
         data[1] = tmp & 0xFF;
         tmp >>= 8;
+        data[2] = (tmp & 0xFF) << 5;
 
-        // data[2] is 3 buttons and the top 5 bits from xAxis
-        data[2] = ((tmp & 0b111) << 5) | ((xAxis & 0b1111100000) >> 5);
+        // data[3] is the top 8 bits from xAxis
+        data[3] = (xAxis & 0b1111111100) >> 2;
 
-        // data[3] is the bottom 5 bits from xAxis and the top 3 bits from yAxis
-        data[3] = ((xAxis & 0b11111) << 3) | ((yAxis & 0b1110000000) >> 7);
+        // data[4] is the bottom 2 bits from xAxis and the top 6 bits from yAxis
+        data[4] = ((xAxis & 0b11) << 6)  | ((yAxis & 0b1111110000) >> 4);
 
-        // data[4] is the bottom 7 bits from yAxis and the top 1 bit from zAxis
-        data[4] = ((yAxis & 0b1111111) << 1) | ((yAxis & 0b1000000000) >> 9);
+        // data[5] is the bottom 4 bits from yAxis and the top 4 bits from zAxis
+        data[5] = ((yAxis & 0b1111) << 4) | ((zAxis & 0b1111000000) >> 6);
 
-        // data[5] is bits 1 - 8 from zAxis
-        data[5] = (zAxis & 0b111111110) >> 1;
-
-        // data[6] is the bottom 1 bit from zAxis
-        data[6] = (zAxis & 0b1) << 7;
+        // data[6] is the bottom 6 bits from zAxis
+        data[6] = (zAxis & 0b111111) << 2;
 
 	// HID().SendReport(Report number, array of values in same order as HID descriptor, length)
 	HID().SendReport(G27_REPORT_ID, data, G27_STATE_SIZE);
