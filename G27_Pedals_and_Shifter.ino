@@ -112,15 +112,12 @@ void* clutchPedal;
 int axisValue(void* in) {
   Pedal* input = (Pedal*)in;
 
-  int range = input->max - input->min;
-  if (range == 0) {
+  int physicalRange = input->max - input->min;
+  if (physicalRange == 0) {
     return 0;
   }
 
-  long step1 = input->cur - input->min;
-  long step2 = step1 * (MAX_AXIS * 2);
-  float step3 = step2 / range;
-  int result = step3 - MAX_AXIS;
+  int result = map(input->cur, input->min, input->max, 0, MAX_AXIS);
 
   if (result < 0) {
     return 0;
