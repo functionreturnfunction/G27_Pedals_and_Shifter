@@ -21,6 +21,9 @@
 // red for brake, green for gas, blue for clutch
 //#define PEDAL_COLORS true
 
+// use static thresholds rather than on-the-fly calibration
+#define STATIC_THRESHOLDS true
+
 // LED PINS
 #define RED_PIN    3
 #define GREEN_PIN  5
@@ -93,6 +96,14 @@
 #define SHIFTER_YAXIS_135       600 //Gears 1,3,5
 #define SHIFTER_YAXIS_246       300 //Gears 2,4,6, R
 
+// PEDAL AXIS THRESHOLDS
+#define MIN_GAS     27
+#define MAX_GAS     925
+#define MIN_BRAKE   26
+#define MAX_BRAKE   845
+#define MIN_CLUTCH  45
+#define MAX_CLUTCH  932
+
 // MISC.
 #define MAX_AXIS            1023
 #define SIGNAL_SETTLE_DELAY 10
@@ -133,10 +144,12 @@ void processPedal(void* in) {
 
   input->cur = analogRead(input->pin);
 
+  #if !defined(STATIC_THRESHOLDS)
   // calibrate, we want the highest this pedal has been
   input->max = input->cur > input->max ? input->cur : input->max;
   // same for lowest, but bottom out at current value rather than 0
   input->min = input->min == 0 || input->cur < input->min ? input->cur : input->min;
+  #endif
 
   input->axis = axisValue(input);
 }
@@ -359,6 +372,17 @@ void setup() {
   gas->pin = GAS_PIN;
   brake->pin = BRAKE_PIN;
   clutch->pin = CLUTCH_PIN;
+
+  #if defined(STATIC_THRESHOLDS)
+  gas->min = MIN_GAS;
+  gas->max = MAX_GAS;
+
+  brake->min = MIN_BRAKE;
+  brake->max = MAX_BRAKE;
+
+  clutch->min = MIN_CLUTCH;
+  clutch->max = MAX_CLUTCH;
+  #endif
 
   gasPedal = gas;
   brakePedal = brake;
