@@ -93,7 +93,7 @@
 // SHIFTER AXIS THRESHOLDS
 #define SHIFTER_XAXIS_12        300 //Gears 1,2
 #define SHIFTER_XAXIS_56        620 //Gears 5,6, R
-#define SHIFTER_YAXIS_135       800 //Gears 1,3,5
+#define SHIFTER_YAXIS_135       750 //Gears 1,3,5
 #define SHIFTER_YAXIS_246       200 //Gears 2,4,6, R
 
 // PEDAL AXIS THRESHOLDS
