@@ -21,8 +21,11 @@
 // red for brake, green for gas, blue for clutch
 //#define PEDAL_COLORS true
 
+// for load-cell users and Australians
+//#define INVERT_BRAKE true
+
 // use static thresholds rather than on-the-fly calibration
-#define STATIC_THRESHOLDS true
+//#define STATIC_THRESHOLDS true
 
 // LED PINS
 #define RED_PIN    3
@@ -394,6 +397,11 @@ void loop() {
   processPedal(gasPedal);
   processPedal(brakePedal);
   processPedal(clutchPedal);
+
+#if defined(INVERT_BRAKE)
+  Pedal* brake = (Pedal*)brakePedal;
+  brake->axis = map(brake->axis, 0, MAX_AXIS, MAX_AXIS, 0);
+#endif
 
 #if defined(DEBUG_PEDALS)
   describePedal("GAS", "X", gasPedal);
