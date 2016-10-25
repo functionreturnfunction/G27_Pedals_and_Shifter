@@ -7,6 +7,10 @@
 #include <HID.h>
 #include "./lib/G27PedalsShifter.h"
 
+// comment either out to disable
+#define USE_PEDALS
+#define USE_SHIFTER
+
 // for debugging, gives serial output rather than working as a joystick
 //#define DEBUG true
 
@@ -94,10 +98,10 @@
 #define OUTPUT_RED_RIGHT       18
 
 // SHIFTER AXIS THRESHOLDS
-#define SHIFTER_XAXIS_12        295 //Gears 1,2
+#define SHIFTER_XAXIS_12        290 //Gears 1,2
 #define SHIFTER_XAXIS_56        600 //Gears 5,6, R
 #define SHIFTER_YAXIS_135       750 //Gears 1,3,5
-#define SHIFTER_YAXIS_246       200 //Gears 2,4,6, R
+#define SHIFTER_YAXIS_246       290 //Gears 2,4,6, R
 
 // PEDAL AXIS THRESHOLDS
 #define MIN_GAS     27
@@ -407,7 +411,7 @@ void loop() {
   describePedal("GAS", "X", gasPedal);
   describePedal("BRAKE", "Y", brakePedal);
   describePedal("CLUTCH", "Z", clutchPedal);
-#else
+#elif defined(USE_PEDALS)
   setXAxis(gasPedal);
   setYAxis(brakePedal);
   setZAxis(clutchPedal);
@@ -426,8 +430,11 @@ void loop() {
 
 #if defined(DEBUG_SHIFTER)
   describeButtonStates(buttonStates, shifterPosition, gear);
-#else
+#elif defined(USE_SHIFTER)
   setButtonStates(buttonStates, gear);
+#endif
+
+#if !defined(DEBUG_SHIFTER) || !defined(DEBUG_PEDALS)
   G27.sendState();
 #endif
 
