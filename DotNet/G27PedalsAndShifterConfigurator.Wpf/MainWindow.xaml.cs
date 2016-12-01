@@ -1,7 +1,10 @@
 ﻿using System;
+using System.ComponentModel;
+using System.Globalization;
 using System.Timers;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Documents;
 
 namespace G27PedalsAndShifterConfigurator.Wpf
@@ -56,69 +59,37 @@ namespace G27PedalsAndShifterConfigurator.Wpf
             _statusTimer.Enabled = true;
         }
 
-        private int ScaleToPercent(int value)
+        private int ScaleInt(int value, double max = 100)
         {
             double d = (double)value;
-            return Convert.ToInt32(d * 100.0 / 1023.0);
+            return Convert.ToInt32(d * max / 1023.0);
         }
 
-        private void SetShifterCalibration(ShifterCalibration calibration)
+        private void SetShifterCalibration()
         {
-            _calibration.Shifter = calibration;
+            var minY = 0;
+            var maxY = cvsShifter.Height;
+            var upperY = ScaleInt(_calibration.Shifter.UpperY, cvsShifter.Height);
+            var lowerY = ScaleInt(_calibration.Shifter.LowerY, cvsShifter.Height);
 
-            var minY = ScaleToPercent(calibration.MinY);
-            var maxY = calibration.MaxY == 0 ? 100 : ScaleToPercent(calibration.MaxY);
-            var upperY = ScaleToPercent(calibration.UpperY);
-            var lowerY = ScaleToPercent(calibration.LowerY);
+            sldTopGate.Value = _calibration.Shifter.UpperY;
+            sldBottomGate.Value = _calibration.Shifter.LowerY;
 
-            sldTopGate.Value = calibration.UpperY;
-            sldBottomGate.Value = calibration.LowerY;
-
-            lneGate13.X1 = lneGate13.X2 = ScaleToPercent(calibration.Gate13);
+            lneGate13.X1 = lneGate13.X2 = ScaleInt(_calibration.Shifter.Gate13, cvsShifter.Height);
             lneGate13.Y1 = minY;
             lneGate13.Y2 = upperY;
 
-            lneGate24.X1 = lneGate24.X2 = ScaleToPercent(calibration.Gate24);
+            lneGate24.X1 = lneGate24.X2 = ScaleInt(_calibration.Shifter.Gate24, cvsShifter.Height);
             lneGate24.Y1 = maxY;
             lneGate24.Y2 = lowerY;
 
-            lneGate35.X1 = lneGate35.X2 = ScaleToPercent(calibration.Gate35);
+            lneGate35.X1 = lneGate35.X2 = ScaleInt(_calibration.Shifter.Gate35, cvsShifter.Height);
             lneGate35.Y1 = minY;
             lneGate35.Y2 = upperY;
 
-            lneGate46.X1 = lneGate46.X2 = ScaleToPercent(calibration.Gate46);
+            lneGate46.X1 = lneGate46.X2 = ScaleInt(_calibration.Shifter.Gate46, cvsShifter.Height);
             lneGate46.Y1 = maxY;
             lneGate46.Y2 = lowerY;
-        }
-
-        #endregion
-
-        #region Event Handlers
-
-        private void btnConnectDevice_Click(object sender, RoutedEventArgs e)
-        {
-            string message;
-            if (!ConnectDeviceValidator.IsValid(this, out message))
-            {
-                MessageBox.Show(this, message);
-                return;
-            }
-
-            _usbHelper = new UsbDeviceHelper(ComPort,
-                s => Dispatcher.Invoke(() => {
-                    DisplayDeviceStatus(s);
-                }));
-
-            btnDisconnectDevice.Visibility = Visibility.Visible;
-            btnConnectDevice.Visibility = Visibility.Hidden;
-
-            _calibration = _usbHelper.GetCalibration();
-            if (!_calibration.Shifter.IsAllZeroes)
-            {
-                SetShifterCalibration(_calibration.Shifter);
-            }
-
-            InitTimer();
         }
 
         private void DisplayDeviceStatus(DeviceState state)
@@ -134,12 +105,12 @@ namespace G27PedalsAndShifterConfigurator.Wpf
             {
                 output = state.ToString();
 
-                pbActualThrottle.Value = ScaleToPercent(state.Pedals.Throttle);
-                pbActualBrake.Value = ScaleToPercent(state.Pedals.Brake);
-                pbActualClutch.Value = ScaleToPercent(state.Pedals.Clutch);
+                pbActualThrottle.Value = ScaleInt(state.Pedals.Throttle);
+                pbActualBrake.Value = ScaleInt(state.Pedals.Brake);
+                pbActualClutch.Value = ScaleInt(state.Pedals.Clutch);
 
-                Canvas.SetTop(rctShifterPosition, 100 - ScaleToPercent(state.Shifter.YPosition));
-                Canvas.SetLeft(rctShifterPosition, ScaleToPercent(state.Shifter.XPosition));
+                Canvas.SetTop(rctShifterPosition, cvsShifter.Height - ScaleInt(state.Shifter.YPosition, cvsShifter.Height) - rctShifterPosition.Height / 2);
+                Canvas.SetLeft(rctShifterPosition, ScaleInt(state.Shifter.XPosition, cvsShifter.Width - rctShifterPosition.Width / 2));
                 var gear = "N";
 
                 if (_calibration.Shifter != null)
@@ -182,12 +153,47 @@ namespace G27PedalsAndShifterConfigurator.Wpf
             rtbOutput.Document.Blocks.Add(new Paragraph(new Run(output)));
         }
 
-        private void btnDisconnectDevice_Click(object sender, RoutedEventArgs e)
+        private void DisconnectErthang()
         {
             _usbHelper.Disconnect();
             _usbHelper.Dispose();
             _statusTimer.Enabled = false;
             _statusTimer.Dispose();
+        }
+
+        #endregion
+
+        #region Event Handlers
+
+        private void btnConnectDevice_Click(object sender, RoutedEventArgs e)
+        {
+            string message;
+            if (!ConnectDeviceValidator.IsValid(this, out message))
+            {
+                MessageBox.Show(this, message);
+                return;
+            }
+
+            _usbHelper = new UsbDeviceHelper(ComPort,
+                s => Dispatcher.Invoke(() => {
+                    DisplayDeviceStatus(s);
+                }));
+
+            btnDisconnectDevice.Visibility = Visibility.Visible;
+            btnConnectDevice.Visibility = Visibility.Hidden;
+
+            _calibration = _usbHelper.GetCalibration();
+            if (!_calibration.Shifter.IsAllZeroes)
+            {
+                SetShifterCalibration();
+            }
+
+            InitTimer();
+        }
+
+        private void btnDisconnectDevice_Click(object sender, RoutedEventArgs e)
+        {
+            DisconnectErthang();
 
             btnDisconnectDevice.Visibility = Visibility.Hidden;
             btnConnectDevice.Visibility = Visibility.Visible;
@@ -195,7 +201,8 @@ namespace G27PedalsAndShifterConfigurator.Wpf
 
         private void btnCalibrateShifter_Click(object sender, RoutedEventArgs e)
         {
-            SetShifterCalibration(new ShifterCalibrator(this, _usbHelper).Calibrate());
+            _calibration.Shifter = new ShifterCalibrator(this, _usbHelper).Calibrate();
+            SetShifterCalibration();
         }
 
         private void sldBottomGate_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -203,7 +210,7 @@ namespace G27PedalsAndShifterConfigurator.Wpf
             if (_calibration?.Shifter != null && e.NewValue != e.OldValue)
             {
                 _calibration.Shifter.LowerY = (int)e.NewValue;
-                SetShifterCalibration(_calibration.Shifter);
+                SetShifterCalibration();
             }
         }
 
@@ -212,13 +219,21 @@ namespace G27PedalsAndShifterConfigurator.Wpf
             if (_calibration?.Shifter != null && e.NewValue != e.OldValue)
             {
                 _calibration.Shifter.UpperY = (int)e.NewValue;
-                SetShifterCalibration(_calibration.Shifter);
+                SetShifterCalibration();
             }
         }
 
         private void btnWriteToDevice_Click(object sender, RoutedEventArgs e)
         {
             _usbHelper.SetCalibration(_calibration);
+        }
+
+        private void Window_Closing(object sender, CancelEventArgs e)
+        {
+            if (_usbHelper != null && _usbHelper.IsConncected)
+            {
+                DisconnectErthang();
+            }
         }
 
         #endregion

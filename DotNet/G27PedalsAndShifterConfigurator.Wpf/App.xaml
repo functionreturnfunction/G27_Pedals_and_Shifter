@@ -4,6 +4,6 @@
              xmlns:local="clr-namespace:G27PedalsAndShifterConfigurator.Wpf"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-         
+
     </Application.Resources>
 </Application>

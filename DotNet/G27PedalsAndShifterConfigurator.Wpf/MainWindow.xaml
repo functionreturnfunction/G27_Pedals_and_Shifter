@@ -6,9 +6,12 @@
         xmlns:local="clr-namespace:G27PedalsAndShifterConfigurator.Wpf"
         xmlns:ports="clr-namespace:System.IO.Ports;assembly=System"
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
+        xmlns:system="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
-        Title="MainWindow" Height="368.331" Width="280.104">
-
+        Title="MainWindow" Height="368" Width="280" Closing="Window_Closing">
+    <Window.Resources>
+        <xctk:HalfConverter x:Key="Half" />
+    </Window.Resources>
     <Grid Margin="0,0,0,0">
         <Grid.Resources>
             <ObjectDataProvider ObjectType="{x:Type ports:SerialPort}" MethodName="GetPortNames" x:Key="PortNames" />
@@ -59,12 +62,14 @@
             </TabItem>
             <TabItem Header="Shifter">
                 <Grid>
-                    <Slider x:Name="sldTopGate" Orientation="Vertical" IsDirectionReversed="True" Height="60" Margin="10,5,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Minimum="0" Maximum="511" RenderTransformOrigin="0.522,0.422" ValueChanged="sldTopGate_ValueChanged"/>
-                    <Canvas HorizontalAlignment="Left" Height="100" Margin="28,10,0,0" VerticalAlignment="Top" Width="100">
-                        <TextBlock x:Name="lblGear" Panel.ZIndex="1" Foreground="Gray" Width="100" Height="100" Text="" />
-                        <Rectangle x:Name="rctShifterPosition" Panel.ZIndex="4" Fill="Black" Canvas.Left="0" Canvas.Top="1" Width="4" Height="4" />
-                        <Rectangle Panel.ZIndex="2" Fill="LightBlue" Canvas.Left="50" Width="4" Height="100" />
-                        <Rectangle Panel.ZIndex="2" Fill="LightBlue" Canvas.Top="50" Width="100" Height="4" />
+                    <Slider x:Name="sldTopGate" Orientation="Vertical" IsDirectionReversed="True" Height="{Binding ElementName=cvsShifter, Path=Height, Converter={StaticResource Half}}" Margin="10,10,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Minimum="0" Maximum="511" RenderTransformOrigin="0.522,0.422" ValueChanged="sldTopGate_ValueChanged" AutoToolTipPlacement="TopLeft" />
+                    <Slider x:Name="sldBottomGate" Orientation="Vertical" IsDirectionReversed="True" Height="{Binding ElementName=sldTopGate, Path=Height}" Margin="178,85,0,0" VerticalAlignment="Top" Minimum="512" Maximum="1023" HorizontalAlignment="Left" Width="20" ValueChanged="sldBottomGate_ValueChanged" AutoToolTipPlacement="TopLeft"/>
+
+                    <Canvas x:Name="cvsShifter"  HorizontalAlignment="Left" Height="150" Margin="28,10,0,0" VerticalAlignment="Top" Width="150">
+                        <TextBlock x:Name="lblGear" Panel.ZIndex="1" Foreground="Gray" Width="150" Height="150" Text="" />
+                        <Rectangle x:Name="rctShifterPosition" Panel.ZIndex="4" Fill="Black" Width="4" Height="4" />
+                        <Rectangle Panel.ZIndex="2" Fill="LightBlue" Canvas.Left="73" Width="4" Height="150" />
+                        <Rectangle Panel.ZIndex="2" Fill="LightBlue" Canvas.Top="73" Width="150" Height="4" />
 
                         <Line x:Name="lneGate13" Panel.ZIndex="3" Stroke="Red" StrokeThickness="1" />
                         <Line x:Name="lneGate24" Panel.ZIndex="3" Stroke="Red" StrokeThickness="1" />
@@ -72,7 +77,6 @@
                         <Line x:Name="lneGate46" Panel.ZIndex="3" Stroke="Red" StrokeThickness="1" />
 
                     </Canvas>
-                    <Slider x:Name="sldBottomGate" Orientation="Vertical" IsDirectionReversed="True" Height="60" Margin="128,57,0,0" VerticalAlignment="Top" Minimum="512" Maximum="1023" HorizontalAlignment="Left" Width="20" ValueChanged="sldBottomGate_ValueChanged"/>
                     <Button x:Name="btnCalibrateShifter" Content="Calibrate Shifter" HorizontalAlignment="Left" Margin="81,184,0,0" VerticalAlignment="Top" Width="105" Height="22" Click="btnCalibrateShifter_Click" />
                 </Grid>
             </TabItem>

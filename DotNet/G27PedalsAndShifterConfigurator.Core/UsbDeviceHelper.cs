@@ -37,6 +37,8 @@ namespace G27PedalsAndShifterConfigurator
 
         #endregion
 
+        public bool IsConncected => _serialTransport.IsConnected();
+
         #region Constructors
 
         public UsbDeviceHelper(string port, Action<DeviceState> displayStatusFn)
