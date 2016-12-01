@@ -9,9 +9,9 @@ void HardwareHelper::setup()
   digitalWrite(SHIFTER_CLOCK_PIN, HIGH);
 }
 
-int HardwareHelper::getGas()
+int HardwareHelper::getThrottle()
 {
-  return pedals.getGas();
+  return pedals.getThrottle();
 }
 
 int HardwareHelper::getBrake()

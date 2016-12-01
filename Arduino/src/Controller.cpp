@@ -3,6 +3,7 @@
 CmdMessenger Controller::cmdMessenger = CmdMessenger(Serial);
 HardwareHelper Controller::hardware;
 CalibrationHelper Controller::calibration;
+Joystick Controller::joystick;
 
 void Controller::attachCommandCallbacks()
 {
@@ -33,7 +34,7 @@ static void Controller::onGetStatus()
 
   cmdMessenger.sendCmdStart(Command::kGetStatusResult);
 
-  cmdMessenger.sendCmdArg(hardware.getGas());
+  cmdMessenger.sendCmdArg(hardware.getThrottle());
   cmdMessenger.sendCmdArg(hardware.getBrake());
   cmdMessenger.sendCmdArg(hardware.getClutch());
 
@@ -90,6 +91,93 @@ static void Controller::onSetCalibration()
   cmdMessenger.sendCmd(Command::kSetCalibrationResult);
 }
 
+int buttonTable[] = {
+  // first four are unused
+  0, 0, 0, 0,
+  OUTPUT_RED_CENTERRIGHT,
+  OUTPUT_RED_CENTERLEFT,
+  OUTPUT_RED_RIGHT,
+  OUTPUT_RED_LEFT,
+  OUTPUT_BLACK_TOP,
+  OUTPUT_BLACK_RIGHT,
+  OUTPUT_BLACK_LEFT,
+  OUTPUT_BLACK_BOTTOM,
+  OUTPUT_DPAD_RIGHT,
+  OUTPUT_DPAD_LEFT,
+  OUTPUT_DPAD_BOTTOM,
+  OUTPUT_DPAD_TOP
+};
+
+static int Controller::getCurrentGear(int *shifterPosition, int *btns)
+{
+  int gear = 0;  // default to neutral
+  int x = shifterPosition[0], y = shifterPosition[1];
+
+  if (y > calibration.values.lowerY)
+  {
+    if (x < calibration.values.gate13)
+    {
+      gear = 1;
+    }
+    else if (x > calibration.values.gate13 && x < calibration.values.gate35)
+    {
+      gear = 3;
+    }
+    else if (x > calibration.values.gate35)
+    {
+      gear = 5;
+    }
+  }
+  else if (y < calibration.values.upperY)
+  {
+    if (x < calibration.values.gate24)
+    {
+      gear = 2;
+    }
+    else if (x > calibration.values.gate24 && x < calibration.values.gate46)
+    {
+      gear = 4;
+    }
+    else if (x > calibration.values.gate46)
+    {
+      gear = 6;
+    }
+  }
+
+  if (gear != 6) btns[BUTTON_REVERSE] = 0;  // Reverse gear is allowed only on 6th gear position
+  if (btns[BUTTON_REVERSE] == 1) gear = 7;  // Reverse is 7th gear (for the sake of argument)
+
+  return gear;
+}
+
+static void Controller::updateJoystick()
+{
+  joystick.setXAxis(map(hardware.getThrottle(), 0, 1023, calibration.values.minThrottle, calibration.values.maxThrottle));
+  joystick.setYAxis(map(hardware.getBrake(), 0, 1023, calibration.values.minBrake, calibration.values.maxBrake));
+  joystick.setZAxis(map(hardware.getClutch(), 0, 1023, calibration.values.minClutch, calibration.values.maxClutch));
+
+  int buttonStates[16];
+  hardware.getButtonStates(buttonStates);
+  int shifterPosition[2];
+  hardware.getShifterPosition(shifterPosition);
+  int gear = getCurrentGear(shifterPosition, buttonStates);
+
+  for (byte i = 0; i < 7; ++i)
+  {
+    joystick.setButton(i, LOW);
+  }
+
+  if (gear > 0) {
+    joystick.setButton(gear - 1, HIGH);
+  }
+
+  for (byte i = BUTTON_RED_CENTERRIGHT; i <= BUTTON_DPAD_TOP; ++i) {
+    joystick.setButton(buttonTable[i], buttonStates[i]);
+  }
+
+  joystick.sendState();
+}
+
 void Controller::setup()
 {
   Serial.begin(BAUD_RATE);
@@ -102,4 +190,5 @@ void Controller::loop()
 {
   // run any commands in queue
   cmdMessenger.feedinSerialData();
+  updateJoystick();
 }

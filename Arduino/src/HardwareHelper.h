@@ -12,7 +12,7 @@ protected:
 
 public:
   void setup();
-  int getGas();
+  int getThrottle();
   int getBrake();
   int getClutch();
   void getButtonStates(int *ret);

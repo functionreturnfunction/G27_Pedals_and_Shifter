@@ -18,14 +18,14 @@
 //|   7 |          |         |             |             |
 //|   8 |          |         |             |             |
 //|   9 | Red      | Black   | GND         | GND         |
-#define GAS_PIN    18
+#define THROTTLE_PIN    18
 #define BRAKE_PIN  19
 #define CLUTCH_PIN 20
 
 class Pedals
 {
  public:
-    int getGas();
+    int getThrottle();
     int getBrake();
     int getClutch();
 };

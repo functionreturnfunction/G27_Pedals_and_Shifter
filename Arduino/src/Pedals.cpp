@@ -1,8 +1,8 @@
 #include "Pedals.h"
 
-int Pedals::getGas()
+int Pedals::getThrottle()
 {
-  return analogRead(GAS_PIN);
+  return analogRead(THROTTLE_PIN);
 }
 
 int Pedals::getBrake()
