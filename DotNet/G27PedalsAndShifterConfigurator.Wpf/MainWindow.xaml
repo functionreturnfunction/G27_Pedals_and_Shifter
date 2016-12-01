@@ -8,7 +8,7 @@
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         xmlns:system="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
-        Title="MainWindow" Height="368" Width="280" Closing="Window_Closing">
+        Title="MainWindow" Height="343.616" Width="280" Closing="Window_Closing">
     <Window.Resources>
         <xctk:HalfConverter x:Key="Half" />
     </Window.Resources>
@@ -37,35 +37,32 @@
                         <Grid>
                             <ProgressBar x:Name="pbActualClutch" HorizontalAlignment="Left" VerticalAlignment="Top" Height="10" Width="100" Margin="10,10,0,0" />
                             <ProgressBar x:Name="pbVirtualClutch" HorizontalAlignment="Left" VerticalAlignment="Top" Height="10" Width="100" Margin="10,25,0,0" />
-                            <xctk:RangeSlider x:Name="rsClutch" HorizontalAlignment="Left" VerticalAlignment="Top" Width="100" Height="10" Margin="10,40,0,0" Minimum="0" Maximum="1023" />
+                            <xctk:RangeSlider x:Name="rsClutch" HorizontalAlignment="Left" VerticalAlignment="Top" Width="100" Height="10" Margin="10,40,0,0" Minimum="0" Maximum="1023" LowerValueChanged="rsClutch_LowerValueChanged" HigherValueChanged="rsClutch_HigherValueChanged" />
                         </Grid>
                     </GroupBox>
-                    <GroupBox Header="Brake" Margin="10,88,0,0" HorizontalAlignment="Left" Width="122" Height="96" VerticalAlignment="Top">
+                    <GroupBox Header="Brake" Margin="10,88,0,0" HorizontalAlignment="Left" Width="122" Height="73" VerticalAlignment="Top">
                         <Grid>
                             <ProgressBar x:Name="pbActualBrake" HorizontalAlignment="Left" VerticalAlignment="Top" Height="10" Width="100" Margin="10,10,0,0" />
                             <ProgressBar x:Name="pbVirtualBrake" HorizontalAlignment="Left" VerticalAlignment="Top" Height="10" Width="100" Margin="10,25,0,0" />
-                            <xctk:RangeSlider x:Name="rsBrake" HorizontalAlignment="Left" VerticalAlignment="Top" Width="100" Height="10" Margin="10,40,0,0" Minimum="0" Maximum="1023" />
-                            <CheckBox x:Name="chkInvertBrake" Height="15" Width="100" Margin="0,55,0,0" VerticalAlignment="Top" HorizontalAlignment="Left">
-                                <TextBlock Text="Invert" />
-                            </CheckBox>
+                            <xctk:RangeSlider x:Name="rsBrake" HorizontalAlignment="Left" VerticalAlignment="Top" Width="100" Height="10" Margin="10,40,0,0" Minimum="0" Maximum="1023" LowerValueChanged="rsBrake_LowerValueChanged" HigherValueChanged="rsBrake_HigherValueChanged" />
                         </Grid>
                     </GroupBox>
                     <GroupBox Header="Throttle" Margin="10,10,0,0" HorizontalAlignment="Left" Width="122" Height="73" VerticalAlignment="Top">
                         <Grid>
                             <ProgressBar x:Name="pbActualThrottle" HorizontalAlignment="Left" VerticalAlignment="Top" Height="10" Width="100" Margin="10,10,0,0" />
                             <ProgressBar x:Name="pbVirtualThrottle" HorizontalAlignment="Left" VerticalAlignment="Top" Height="10" Width="100" Margin="10,25,0,0" />
-                            <xctk:RangeSlider x:Name="rsThrottle" HorizontalAlignment="Left" VerticalAlignment="Top" Width="100" Height="10" Margin="10,40,0,0" Minimum="0" Maximum="1023" />
+                            <xctk:RangeSlider x:Name="rsThrottle" HorizontalAlignment="Left" VerticalAlignment="Top" Width="100" Height="10" Margin="10,40,0,0" Minimum="0" Maximum="1023" LowerValueChanged="rsThrottle_LowerValueChanged" HigherValueChanged="rsThrottle_HigherValueChanged" />
                         </Grid>
                     </GroupBox>
-                    <Button x:Name="btnCalibratePedals" Content="Calibrate Pedals" Margin="80,189,81,0" VerticalAlignment="Top" Height="22" />
+                    <Button x:Name="btnCalibratePedals" Content="Calibrate Pedals" Margin="81,166,0,0" HorizontalAlignment="Left" Width="105" Height="22" VerticalAlignment="Top" />
                 </Grid>
             </TabItem>
             <TabItem Header="Shifter">
                 <Grid>
-                    <Slider x:Name="sldTopGate" Orientation="Vertical" IsDirectionReversed="True" Height="{Binding ElementName=cvsShifter, Path=Height, Converter={StaticResource Half}}" Margin="10,10,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Minimum="0" Maximum="511" RenderTransformOrigin="0.522,0.422" ValueChanged="sldTopGate_ValueChanged" AutoToolTipPlacement="TopLeft" />
-                    <Slider x:Name="sldBottomGate" Orientation="Vertical" IsDirectionReversed="True" Height="{Binding ElementName=sldTopGate, Path=Height}" Margin="178,85,0,0" VerticalAlignment="Top" Minimum="512" Maximum="1023" HorizontalAlignment="Left" Width="20" ValueChanged="sldBottomGate_ValueChanged" AutoToolTipPlacement="TopLeft"/>
+                    <Slider x:Name="sldTopGate" Orientation="Vertical" IsDirectionReversed="True" Height="{Binding ElementName=cvsShifter, Path=Height, Converter={StaticResource Half}}" Margin="47,10,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Minimum="0" Maximum="511" RenderTransformOrigin="0.522,0.422" ValueChanged="sldTopGate_ValueChanged" AutoToolTipPlacement="TopLeft" />
+                    <Slider x:Name="sldBottomGate" Orientation="Vertical" IsDirectionReversed="True" Height="{Binding ElementName=sldTopGate, Path=Height}" Margin="215,85,0,0" VerticalAlignment="Top" Minimum="512" Maximum="1023" HorizontalAlignment="Left" Width="20" ValueChanged="sldBottomGate_ValueChanged" AutoToolTipPlacement="TopLeft"/>
 
-                    <Canvas x:Name="cvsShifter"  HorizontalAlignment="Left" Height="150" Margin="28,10,0,0" VerticalAlignment="Top" Width="150">
+                    <Canvas x:Name="cvsShifter"  HorizontalAlignment="Left" Height="150" Margin="65,10,0,0" VerticalAlignment="Top" Width="150">
                         <TextBlock x:Name="lblGear" Panel.ZIndex="1" Foreground="Gray" Width="150" Height="150" Text="" />
                         <Rectangle x:Name="rctShifterPosition" Panel.ZIndex="4" Fill="Black" Width="4" Height="4" />
                         <Rectangle Panel.ZIndex="2" Fill="LightBlue" Canvas.Left="73" Width="4" Height="150" />
@@ -77,10 +74,17 @@
                         <Line x:Name="lneGate46" Panel.ZIndex="3" Stroke="Red" StrokeThickness="1" />
 
                     </Canvas>
-                    <Button x:Name="btnCalibrateShifter" Content="Calibrate Shifter" HorizontalAlignment="Left" Margin="81,184,0,0" VerticalAlignment="Top" Width="105" Height="22" Click="btnCalibrateShifter_Click" />
+                    <Button x:Name="btnCalibrateShifter" Content="Calibrate Shifter" HorizontalAlignment="Left" Margin="81,166,0,0" VerticalAlignment="Top" Width="105" Height="22" Click="btnCalibrateShifter_Click" />
+                </Grid>
+            </TabItem>
+            <TabItem Header="Settings">
+                <Grid>
+                    <CheckBox x:Name="chkInvertBrake" Height="15" Width="100" Margin="10,10,0,0" VerticalAlignment="Top" HorizontalAlignment="Left">
+                        <TextBlock Text="Invert Brake" />
+                    </CheckBox>
                 </Grid>
             </TabItem>
         </TabControl>
-        <Button x:Name="btnWriteToDevice" Content="Write to Device" Margin="84,295,83,0" VerticalAlignment="Top" Height="22" Click="btnWriteToDevice_Click" />
+        <Button x:Name="btnWriteToDevice" Content="Write to Device" Margin="84,0,83,10" VerticalAlignment="Bottom" Height="22" Click="btnWriteToDevice_Click" />
     </Grid>
 </Window>

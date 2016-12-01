@@ -1,10 +1,8 @@
 ﻿using System;
 using System.ComponentModel;
-using System.Globalization;
 using System.Timers;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
 using System.Windows.Documents;
 
 namespace G27PedalsAndShifterConfigurator.Wpf
@@ -59,37 +57,51 @@ namespace G27PedalsAndShifterConfigurator.Wpf
             _statusTimer.Enabled = true;
         }
 
-        private int ScaleInt(int value, double max = 100)
+        private int ScaleInt(int value, int fromMin, int fromMax, int toMin, int toMax)
         {
-            double d = (double)value;
-            return Convert.ToInt32(d * max / 1023.0);
+            return value*(toMax - toMin)/(fromMax - fromMin) + toMin;
+        }
+
+        private int Scale10Bit(int value, double max = 100)
+        {
+            return ScaleInt(value, 0, 1023, 0, (int)max);
         }
 
         private void SetShifterCalibration()
         {
             var minY = 0;
             var maxY = cvsShifter.Height;
-            var upperY = ScaleInt(_calibration.Shifter.UpperY, cvsShifter.Height);
-            var lowerY = ScaleInt(_calibration.Shifter.LowerY, cvsShifter.Height);
+            var upperY = Scale10Bit(_calibration.Shifter.UpperY, cvsShifter.Height);
+            var lowerY = Scale10Bit(_calibration.Shifter.LowerY, cvsShifter.Height);
 
             sldTopGate.Value = _calibration.Shifter.UpperY;
             sldBottomGate.Value = _calibration.Shifter.LowerY;
 
-            lneGate13.X1 = lneGate13.X2 = ScaleInt(_calibration.Shifter.Gate13, cvsShifter.Height);
+            lneGate13.X1 = lneGate13.X2 = Scale10Bit(_calibration.Shifter.Gate13, cvsShifter.Height);
             lneGate13.Y1 = minY;
             lneGate13.Y2 = upperY;
 
-            lneGate24.X1 = lneGate24.X2 = ScaleInt(_calibration.Shifter.Gate24, cvsShifter.Height);
+            lneGate24.X1 = lneGate24.X2 = Scale10Bit(_calibration.Shifter.Gate24, cvsShifter.Height);
             lneGate24.Y1 = maxY;
             lneGate24.Y2 = lowerY;
 
-            lneGate35.X1 = lneGate35.X2 = ScaleInt(_calibration.Shifter.Gate35, cvsShifter.Height);
+            lneGate35.X1 = lneGate35.X2 = Scale10Bit(_calibration.Shifter.Gate35, cvsShifter.Height);
             lneGate35.Y1 = minY;
             lneGate35.Y2 = upperY;
 
-            lneGate46.X1 = lneGate46.X2 = ScaleInt(_calibration.Shifter.Gate46, cvsShifter.Height);
+            lneGate46.X1 = lneGate46.X2 = Scale10Bit(_calibration.Shifter.Gate46, cvsShifter.Height);
             lneGate46.Y1 = maxY;
             lneGate46.Y2 = lowerY;
+        }
+
+        private void SetPedalsCalibration()
+        {
+            rsThrottle.LowerValue = _calibration.Pedals.MinThrottle;
+            rsThrottle.HigherValue = _calibration.Pedals.MaxThrottle;
+            rsBrake.LowerValue = _calibration.Pedals.MinBrake;
+            rsBrake.HigherValue = _calibration.Pedals.MaxBrake;
+            rsClutch.LowerValue = _calibration.Pedals.MinClutch;
+            rsClutch.HigherValue = _calibration.Pedals.MaxClutch;
         }
 
         private void DisplayDeviceStatus(DeviceState state)
@@ -105,12 +117,22 @@ namespace G27PedalsAndShifterConfigurator.Wpf
             {
                 output = state.ToString();
 
-                pbActualThrottle.Value = ScaleInt(state.Pedals.Throttle);
-                pbActualBrake.Value = ScaleInt(state.Pedals.Brake);
-                pbActualClutch.Value = ScaleInt(state.Pedals.Clutch);
+                pbActualThrottle.Value = Scale10Bit(state.Pedals.Throttle);
+                pbActualBrake.Value = Scale10Bit(state.Pedals.Brake);
+                pbActualClutch.Value = Scale10Bit(state.Pedals.Clutch);
 
-                Canvas.SetTop(rctShifterPosition, cvsShifter.Height - ScaleInt(state.Shifter.YPosition, cvsShifter.Height) - rctShifterPosition.Height / 2);
-                Canvas.SetLeft(rctShifterPosition, ScaleInt(state.Shifter.XPosition, cvsShifter.Width - rctShifterPosition.Width / 2));
+                if (!_calibration.Pedals.HasAnyUnset)
+                {
+                    pbVirtualThrottle.Value = ScaleInt(state.Pedals.Throttle, _calibration.Pedals.MinThrottle,
+                        _calibration.Pedals.MaxThrottle, 0, 100);
+                    pbVirtualBrake.Value = ScaleInt(state.Pedals.Brake, _calibration.Pedals.MinBrake,
+                        _calibration.Pedals.MaxBrake, 0, 100);
+                    pbVirtualClutch.Value = ScaleInt(state.Pedals.Clutch, _calibration.Pedals.MinClutch,
+                        _calibration.Pedals.MaxClutch, 0, 100);
+                }
+
+                Canvas.SetTop(rctShifterPosition, cvsShifter.Height - Scale10Bit(state.Shifter.YPosition, cvsShifter.Height) - rctShifterPosition.Height / 2);
+                Canvas.SetLeft(rctShifterPosition, Scale10Bit(state.Shifter.XPosition, cvsShifter.Width - rctShifterPosition.Width / 2));
                 var gear = "N";
 
                 if (_calibration.Shifter != null)
@@ -183,9 +205,14 @@ namespace G27PedalsAndShifterConfigurator.Wpf
             btnConnectDevice.Visibility = Visibility.Hidden;
 
             _calibration = _usbHelper.GetCalibration();
-            if (!_calibration.Shifter.IsAllZeroes)
+            if (!_calibration.Shifter.HasAnyUnset)
             {
                 SetShifterCalibration();
+            }
+
+            if (!_calibration.Pedals.HasAnyUnset)
+            {
+                SetPedalsCalibration();
             }
 
             InitTimer();
@@ -226,6 +253,7 @@ namespace G27PedalsAndShifterConfigurator.Wpf
         private void btnWriteToDevice_Click(object sender, RoutedEventArgs e)
         {
             _usbHelper.SetCalibration(_calibration);
+            MessageBox.Show(this, "Finished writing calibration data to device");
         }
 
         private void Window_Closing(object sender, CancelEventArgs e)
@@ -234,6 +262,42 @@ namespace G27PedalsAndShifterConfigurator.Wpf
             {
                 DisconnectErthang();
             }
+        }
+
+        private void rsThrottle_LowerValueChanged(object sender, RoutedEventArgs e)
+        {
+            _calibration.Pedals.MinThrottle = (int)rsThrottle.LowerValue;
+            SetPedalsCalibration();
+        }
+
+        private void rsThrottle_HigherValueChanged(object sender, RoutedEventArgs e)
+        {
+            _calibration.Pedals.MaxThrottle = (int)rsThrottle.HigherValue;
+            SetPedalsCalibration();
+        }
+
+        private void rsBrake_LowerValueChanged(object sender, RoutedEventArgs e)
+        {
+            _calibration.Pedals.MinBrake = (int)rsBrake.LowerValue;
+            SetPedalsCalibration();
+        }
+
+        private void rsBrake_HigherValueChanged(object sender, RoutedEventArgs e)
+        {
+            _calibration.Pedals.MaxBrake = (int)rsBrake.HigherValue;
+            SetPedalsCalibration();
+        }
+
+        private void rsClutch_LowerValueChanged(object sender, RoutedEventArgs e)
+        {
+            _calibration.Pedals.MinClutch = (int)rsClutch.LowerValue;
+            SetPedalsCalibration();
+        }
+
+        private void rsClutch_HigherValueChanged(object sender, RoutedEventArgs e)
+        {
+            _calibration.Pedals.MaxClutch = (int)rsClutch.HigherValue;
+            SetPedalsCalibration();
         }
 
         #endregion

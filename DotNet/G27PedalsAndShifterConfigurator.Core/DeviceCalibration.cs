@@ -8,7 +8,7 @@
 
         public ShifterCalibration Shifter { get; set; }
 
-        public bool IsAllZeroes => Pedals.IsAllZeroes && Shifter.IsAllZeroes;
+        public bool HasAnyUnset => Pedals.HasAnyUnset && Shifter.HasAnyUnset;
 
         #endregion
 
@@ -34,9 +34,9 @@
         public int MinClutch { get; set; }
         public int MaxClutch { get; set; }
 
-        public bool IsAllZeroes =>
-            MinThrottle == MaxThrottle && MaxThrottle == MinBrake && MinBrake == MaxBrake && MaxBrake == MinClutch &&
-            MinClutch == MaxClutch && MaxClutch == 0;
+        public bool HasAnyUnset =>
+            MinThrottle < 0 || MaxThrottle < 1 || MinBrake < 0 || MaxBrake < 1 || MinClutch < 0 ||
+            MaxClutch < 1;
 
         #endregion
     }
@@ -67,7 +67,7 @@
             set { _lowerY = value; }
         }
 
-        public bool IsAllZeroes => Gate13 == Gate24 && Gate24 == Gate35 && Gate35 == Gate46 && Gate46 == 0;
+        public bool HasAnyUnset => Gate13 < 1 || Gate24 < 1 || Gate35 < 1 || Gate46 < 1;
 
         #endregion
     }
