@@ -232,6 +232,12 @@ namespace G27PedalsAndShifterConfigurator.Wpf
             SetShifterCalibration();
         }
 
+        private void btnCalibratePedals_Click(object sender, RoutedEventArgs e)
+        {
+            _calibration.Pedals = new PedalsCalibrator(this, _usbHelper).Calibrate();
+            SetPedalsCalibration();
+        }
+
         private void sldBottomGate_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             if (_calibration?.Shifter != null && e.NewValue != e.OldValue)

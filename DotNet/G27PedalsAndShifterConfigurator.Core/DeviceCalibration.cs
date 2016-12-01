@@ -4,7 +4,7 @@
     {
         #region Properties
 
-        public PedalsCalibration Pedals { get; }
+        public PedalsCalibration Pedals { get; set; }
 
         public ShifterCalibration Shifter { get; set; }
 

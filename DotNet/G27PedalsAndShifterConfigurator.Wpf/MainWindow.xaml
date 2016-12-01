@@ -54,7 +54,7 @@
                             <xctk:RangeSlider x:Name="rsThrottle" HorizontalAlignment="Left" VerticalAlignment="Top" Width="100" Height="10" Margin="10,40,0,0" Minimum="0" Maximum="1023" LowerValueChanged="rsThrottle_LowerValueChanged" HigherValueChanged="rsThrottle_HigherValueChanged" />
                         </Grid>
                     </GroupBox>
-                    <Button x:Name="btnCalibratePedals" Content="Calibrate Pedals" Margin="81,166,0,0" HorizontalAlignment="Left" Width="105" Height="22" VerticalAlignment="Top" />
+                    <Button x:Name="btnCalibratePedals" Content="Calibrate Pedals" Margin="81,166,0,0" HorizontalAlignment="Left" Width="105" Height="22" VerticalAlignment="Top" Click="btnCalibratePedals_Click" />
                 </Grid>
             </TabItem>
             <TabItem Header="Shifter">
