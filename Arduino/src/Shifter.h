@@ -40,18 +40,18 @@
 #define BUTTON_DPAD_BOTTOM     14
 #define BUTTON_DPAD_TOP        15
 
-#define OUTPUT_BLACK_TOP       7
-#define OUTPUT_BLACK_LEFT      8
-#define OUTPUT_BLACK_RIGHT     9
-#define OUTPUT_BLACK_BOTTOM    10
-#define OUTPUT_DPAD_TOP        11
-#define OUTPUT_DPAD_LEFT       12
-#define OUTPUT_DPAD_RIGHT      13
-#define OUTPUT_DPAD_BOTTOM     14
-#define OUTPUT_RED_LEFT        15
-#define OUTPUT_RED_CENTERLEFT  16
-#define OUTPUT_RED_CENTERRIGHT 17
-#define OUTPUT_RED_RIGHT       18
+#define OUTPUT_BLACK_TOP       9
+#define OUTPUT_BLACK_LEFT      10
+#define OUTPUT_BLACK_RIGHT     11
+#define OUTPUT_BLACK_BOTTOM    12
+#define OUTPUT_DPAD_TOP        13
+#define OUTPUT_DPAD_LEFT       14
+#define OUTPUT_DPAD_RIGHT      15
+#define OUTPUT_DPAD_BOTTOM     16
+#define OUTPUT_RED_LEFT        17
+#define OUTPUT_RED_CENTERLEFT  18
+#define OUTPUT_RED_CENTERRIGHT 19
+#define OUTPUT_RED_RIGHT       20
 
 // MISC.
 #define SIGNAL_SETTLE_DELAY 10

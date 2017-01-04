@@ -78,13 +78,20 @@
                 </Grid>
             </TabItem>
             <TabItem Header="Settings">
-                <Grid>
-                    <CheckBox x:Name="chkInvertBrake" Height="15" Width="100" Margin="10,10,0,0" VerticalAlignment="Top" HorizontalAlignment="Left">
+                <Grid DataContext="{Binding _calibration}">
+                    <CheckBox x:Name="chkUsePedals" Height="15" Width="100" Margin="10,10,0,0" VerticalAlignment="Top" HorizontalAlignment="Left">
+                        <TextBlock Text="Use Pedals" />
+                    </CheckBox>
+                    <CheckBox x:Name="chkUseShifter" Height="15" Width="100" Margin="10,30,0,0" VerticalAlignment="Top" HorizontalAlignment="Left">
+                        <TextBlock Text="Use Shifter" />
+                    </CheckBox>
+                    <CheckBox x:Name="chkInvertBrake" Height="15" Width="100" Margin="10,50,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" IsChecked="{Binding Path=Pedals.InvertBrake, Mode=TwoWay}">
                         <TextBlock Text="Invert Brake" />
                     </CheckBox>
                 </Grid>
             </TabItem>
         </TabControl>
-        <Button x:Name="btnWriteToDevice" Content="Write to Device" Margin="84,0,83,10" VerticalAlignment="Bottom" Height="22" Click="btnWriteToDevice_Click" />
+        <Button x:Name="btnResetCalibration" Content="Reset Calibration" Margin="20,0,147,15" VerticalAlignment="Bottom" Height="22" Click="btnResetCalibration_OnClick" />
+        <Button x:Name="btnWriteToDevice" Content="Write to Device" Margin="148,0,19,15" VerticalAlignment="Bottom" Height="22" Click="btnWriteToDevice_Click" />
     </Grid>
 </Window>

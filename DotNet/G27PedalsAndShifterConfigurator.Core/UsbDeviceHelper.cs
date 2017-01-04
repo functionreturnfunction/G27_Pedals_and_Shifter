@@ -90,12 +90,16 @@ namespace G27PedalsAndShifterConfigurator
             cmd.AddArgument(calibration.Pedals.MaxBrake);
             cmd.AddArgument(calibration.Pedals.MinClutch);
             cmd.AddArgument(calibration.Pedals.MaxClutch);
+            cmd.AddArgument(calibration.Pedals.UsePedals);
+            cmd.AddArgument(calibration.Pedals.InvertBrake);
+
             cmd.AddArgument(calibration.Shifter.Gate13);
             cmd.AddArgument(calibration.Shifter.Gate24);
             cmd.AddArgument(calibration.Shifter.Gate35);
             cmd.AddArgument(calibration.Shifter.Gate46);
             cmd.AddArgument(calibration.Shifter.LowerY);
             cmd.AddArgument(calibration.Shifter.UpperY);
+            cmd.AddArgument(calibration.Shifter.UseShifter);
 
             _commandMessenger.SendCommand(cmd);
         }

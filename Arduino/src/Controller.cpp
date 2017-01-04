@@ -61,12 +61,16 @@ static void Controller::onGetCalibration()
   cmdMessenger.sendCmdArg(calibration.values.maxBrake);
   cmdMessenger.sendCmdArg(calibration.values.minClutch);
   cmdMessenger.sendCmdArg(calibration.values.maxClutch);
+  cmdMessenger.sendCmdArg(calibration.values.usePedals);
+  cmdMessenger.sendCmdArg(calibration.values.invertBrake);
   cmdMessenger.sendCmdArg(calibration.values.gate13);
   cmdMessenger.sendCmdArg(calibration.values.gate24);
   cmdMessenger.sendCmdArg(calibration.values.gate35);
   cmdMessenger.sendCmdArg(calibration.values.gate46);
   cmdMessenger.sendCmdArg(calibration.values.lowerY);
   cmdMessenger.sendCmdArg(calibration.values.upperY);
+  cmdMessenger.sendCmdArg(calibration.values.useShifter);
+  cmdMessenger.sendCmdArg(calibration.values.invertSequentialToggle);
 
   cmdMessenger.sendCmdEnd();
 }
@@ -79,6 +83,8 @@ static void Controller::onSetCalibration()
   calibration.values.maxBrake = cmdMessenger.readInt16Arg();
   calibration.values.minClutch = cmdMessenger.readInt16Arg();
   calibration.values.maxClutch = cmdMessenger.readInt16Arg();
+  calibration.values.usePedals = cmdMessenger.readBoolArg();
+  calibration.values.invertBrake = cmdMessenger.readBoolArg();
 
   calibration.values.gate13 = cmdMessenger.readInt16Arg();
   calibration.values.gate24 = cmdMessenger.readInt16Arg();
@@ -86,6 +92,8 @@ static void Controller::onSetCalibration()
   calibration.values.gate46 = cmdMessenger.readInt16Arg();
   calibration.values.lowerY = cmdMessenger.readInt16Arg();
   calibration.values.upperY = cmdMessenger.readInt16Arg();
+  calibration.values.useShifter = cmdMessenger.readBoolArg();
+  calibration.values.invertSequentialToggle = cmdMessenger.readBoolArg();
 
   calibration.writeToMemory();
   cmdMessenger.sendCmd(Command::kSetCalibrationResult);
@@ -162,7 +170,7 @@ static void Controller::updateJoystick()
   hardware.getShifterPosition(shifterPosition);
   int gear = getCurrentGear(shifterPosition, buttonStates);
 
-  for (byte i = 0; i < 7; ++i)
+  for (byte i = 0; i < 9; ++i)
   {
     joystick.setButton(i, LOW);
   }

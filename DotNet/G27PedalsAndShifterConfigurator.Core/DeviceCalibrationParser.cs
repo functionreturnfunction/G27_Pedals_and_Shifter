@@ -6,23 +6,14 @@ namespace G27PedalsAndShifterConfigurator
     {
         public static DeviceCalibration ParseCalibration(ReceivedCommand cmd)
         {
-            var calibration = new DeviceCalibration();
-
-            calibration.Pedals.MinThrottle = cmd.ReadInt16Arg();
-            calibration.Pedals.MaxThrottle = cmd.ReadInt16Arg();
-            calibration.Pedals.MinBrake = cmd.ReadInt16Arg();
-            calibration.Pedals.MaxBrake = cmd.ReadInt16Arg();
-            calibration.Pedals.MinClutch = cmd.ReadInt16Arg();
-            calibration.Pedals.MaxClutch = cmd.ReadInt16Arg();
-
-            calibration.Shifter.Gate13 = cmd.ReadInt16Arg();
-            calibration.Shifter.Gate24 = cmd.ReadInt16Arg();
-            calibration.Shifter.Gate35 = cmd.ReadInt16Arg();
-            calibration.Shifter.Gate46 = cmd.ReadInt16Arg();
-            calibration.Shifter.LowerY = cmd.ReadInt16Arg();
-            calibration.Shifter.UpperY = cmd.ReadInt16Arg();
-
-            return calibration;
+            return
+                new DeviceCalibration(
+                    new PedalsCalibration(minThrottle: cmd.ReadInt16Arg(), maxThrottle: cmd.ReadInt16Arg(),
+                        minBrake: cmd.ReadInt16Arg(), maxBrake: cmd.ReadInt16Arg(), minClutch: cmd.ReadInt16Arg(),
+                        maxClutch: cmd.ReadInt16Arg(), usePedals: cmd.ReadBoolArg(), invertBrake: cmd.ReadBoolArg()),
+                    new ShifterCalibration(gate13: cmd.ReadInt16Arg(), gate24: cmd.ReadInt16Arg(),
+                        gate35: cmd.ReadInt16Arg(), gate46: cmd.ReadInt16Arg(), lowerY: cmd.ReadInt16Arg(),
+                        upperY: cmd.ReadInt16Arg(), useShifter: cmd.ReadBoolArg()));
         }
     }
 }

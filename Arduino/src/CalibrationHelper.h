@@ -1,6 +1,7 @@
 #ifndef CalibrationHelper_h
 #define CalibrationHelper_h
 
+#include <stdbool.h>
 #include "EEPROMAnything.h"
 
 struct calibration_t
@@ -15,6 +16,11 @@ struct calibration_t
     gate46,
     lowerY,
     upperY;
+
+  bool usePedals,
+    useShifter,
+    invertBrake,
+    invertSequentialToggle;
 };
 
 class CalibrationHelper

@@ -59,7 +59,8 @@ namespace G27PedalsAndShifterConfigurator.Wpf
 
         private int ScaleInt(int value, int fromMin, int fromMax, int toMin, int toMax)
         {
-            return value*(toMax - toMin)/(fromMax - fromMin) + toMin;
+//            return value*(toMax - toMin)/(fromMax - fromMin) + toMin;
+            return (value - fromMin)*(toMax - toMin)/(fromMax - fromMin) + toMin;
         }
 
         private int Scale10Bit(int value, double max = 100)
@@ -304,6 +305,20 @@ namespace G27PedalsAndShifterConfigurator.Wpf
         {
             _calibration.Pedals.MaxClutch = (int)rsClutch.HigherValue;
             SetPedalsCalibration();
+        }
+
+        private void btnResetCalibration_OnClick(object sender, RoutedEventArgs e)
+        {
+            if (MessageBox.Show(this, "This will reset the calibration in both this app and your device.  Are you sure?",
+                    "Reset Confirmation", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+            {
+                _calibration = DeviceCalibration.Reset();
+                if (_usbHelper != null && _usbHelper.IsConncected)
+                {
+                    _usbHelper.SetCalibration(_calibration);
+                }
+                MessageBox.Show(this, "Finished resetting calibration");
+            }
         }
 
         #endregion
