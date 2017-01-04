@@ -23,7 +23,7 @@
 #ifndef G27_h
 #define G27_h
 
-#include "HID.h"
+#include <HID.h>
 
 #if !defined(_USING_HID)
 
