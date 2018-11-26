@@ -5,7 +5,7 @@
 // http://www.isrtv.com/forums/topic/13189-diy-g25-shifter-interface-with-h-pattern-sequential-and-handbrake-modes/
 
 #include <HID.h>
-#include "./lib/G27PedalsShifter.h"
+#include "./src/G27PedalsShifter.h"
 
 // comment either out to disable
 #define USE_PEDALS
