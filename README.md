@@ -1,4 +1,4 @@
-Thanks @functionreturnsfunction for this great project. In this fork, the gear changing heuristics has been chnaged, because my reverse gear sensor is broken and so I assigned another button to it. Otherwise everything has been working out of the box!
+Thanks @functionreturnfunction for this great project. In this fork, the gear changing heuristics has been chnaged, because my reverse gear sensor is broken and so I assigned another button to it. Otherwise everything has been working out of the box!
 
 # G27 Pedals and Shifter
 
