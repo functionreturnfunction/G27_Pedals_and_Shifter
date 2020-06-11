@@ -98,18 +98,14 @@
 #define OUTPUT_RED_RIGHT       18
 
 // SHIFTER AXIS THRESHOLDS
-#define SHIFTER_XAXIS_12        290 //Gears 1,2
-#define SHIFTER_XAXIS_56        600 //Gears 5,6, R
-#define SHIFTER_YAXIS_135       750 //Gears 1,3,5
-#define SHIFTER_YAXIS_246       290 //Gears 2,4,6, R
+#define SHIFTER_YAXIS_LOWER_NEUTRAL_ZONE 400 // if y is inside this zone we are always neutral
+#define SHIFTER_YAXIS_UPPER_NEUTRAL_ZONE 650 
+#define SHIFTER_YAXIS_LOWER_GEAR_ZONE 250 // if y is inside this zone we are always in 2,4,6 or Reverse
+#define SHIFTER_YAXIS_UPPER_GEAR_ZONE 750 // if y is inside this zone we are always in 1,3 or 5
 
-// PEDAL AXIS THRESHOLDS
-#define MIN_GAS     27
-#define MAX_GAS     925
-#define MIN_BRAKE   26
-#define MAX_BRAKE   845
-#define MIN_CLUTCH  45
-#define MAX_CLUTCH  932
+#define SHIFTER_XAXIS_34        490 // rest position
+#define SHIFTER_XAXIS_12        320 // rest position gear 1 and 2 (highest value)
+#define SHIFTER_XAXIS_56        650 // rest position gear 4 and 6 (lowest value)
 
 // MISC.
 #define MAX_AXIS            1023
@@ -119,9 +115,7 @@
 typedef struct pedal {
   byte pin;
   int min, max, cur, axis;
-};
-
-typedef struct pedal Pedal;
+} Pedal;
 
 void* gasPedal;
 void* brakePedal;
@@ -151,12 +145,12 @@ void processPedal(void* in) {
 
   input->cur = analogRead(input->pin);
 
-  #if !defined(STATIC_THRESHOLDS)
+#if !defined(STATIC_THRESHOLDS)
   // calibrate, we want the highest this pedal has been
   input->max = input->cur > input->max ? input->cur : input->max;
   // same for lowest, but bottom out at current value rather than 0
   input->min = input->min == 0 || input->cur < input->min ? input->cur : input->min;
-  #endif
+#endif
 
   input->axis = axisValue(input);
 }
@@ -192,14 +186,6 @@ void setYAxis(void* in) {
 void setZAxis(void* in) {
   Pedal* input = (Pedal*)in;
   G27.setZAxis(input->axis);
-}
-
-void pedalColor(void* inGas, void* inBrake, void* inClutch){
-  Pedal* gas = (Pedal*)inGas;
-  Pedal* brake = (Pedal*)inBrake;
-  Pedal* clutch = (Pedal*)inClutch;
-
-  setColor(brake->axis + MAX_AXIS, gas->axis + MAX_AXIS, clutch->axis + MAX_AXIS);
 }
 
 // SHIFTER CODE
@@ -259,27 +245,67 @@ void getShifterPosition(int *ret) {
 }
 
 int getCurrentGear(int shifterPosition[], int btns[]) {
-  int gear = 0;  // default to neutral
+  static int gear = 0;  // default to neutral
   int x = shifterPosition[0], y = shifterPosition[1];
 
-    if (x < SHIFTER_XAXIS_12)                // Shifter on the left?
-    {
-      if (y > SHIFTER_YAXIS_135) gear = 1;   // 1st gear
-      if (y < SHIFTER_YAXIS_246) gear = 2;   // 2nd gear
-    }
-    else if (x > SHIFTER_XAXIS_56)           // Shifter on the right?
-    {
-      if (y > SHIFTER_YAXIS_135) gear = 5;   // 5th gear
-      if (y < SHIFTER_YAXIS_246) gear = 6;   // 6th gear
-    }
-    else                                     // Shifter is in the middle
-    {
-      if (y > SHIFTER_YAXIS_135) gear = 3;   // 3rd gear
-      if (y < SHIFTER_YAXIS_246) gear = 4;   // 4th gear
-    }
+  if (y < SHIFTER_YAXIS_UPPER_NEUTRAL_ZONE && y > SHIFTER_YAXIS_LOWER_NEUTRAL_ZONE)
+  {
+    gear = 0;
+  }
 
-  if (gear != 6) btns[BUTTON_REVERSE] = 0;  // Reverse gear is allowed only on 6th gear position
-  if (btns[BUTTON_REVERSE] == 1) gear = 7;  // Reverse is 7th gear (for the sake of argument)
+  if (y > SHIFTER_YAXIS_UPPER_GEAR_ZONE )
+  {
+    if( x <= SHIFTER_XAXIS_12 )
+    {
+      if( gear != 3 )
+      {
+        gear = 1;
+      }
+    } else if ( x >= SHIFTER_XAXIS_56 )
+    {
+      if( gear != 3 )
+      {
+        gear = 5;
+      }
+    } else
+    {
+      if( gear != 1 && gear != 5 )
+      {
+        gear = 3;
+      }
+    }
+  }
+  if (y < SHIFTER_YAXIS_LOWER_GEAR_ZONE )
+  {
+    if( x <= SHIFTER_XAXIS_12 )
+    {
+      if( gear != 4 )
+      {
+        gear = 2;
+      }
+    } else if ( x >= SHIFTER_XAXIS_56 )
+    {
+      if( btns[BUTTON_RED_RIGHT] )
+      {
+        if( gear != 4 && gear != 6 )
+        {
+          gear = 7;
+        }
+      } else
+      {
+        if( gear != 4 && gear != 7)
+        {
+          gear = 6;
+        }
+      }
+    } else
+    {
+      if( gear != 2 && gear != 6  && gear != 7)
+      {
+        gear = 4;
+      }
+    }
+  }
 
   return gear;
 }
@@ -380,7 +406,7 @@ void setup() {
   brake->pin = BRAKE_PIN;
   clutch->pin = CLUTCH_PIN;
 
-  #if defined(STATIC_THRESHOLDS)
+#if defined(STATIC_THRESHOLDS)
   gas->min = MIN_GAS;
   gas->max = MAX_GAS;
 
@@ -389,7 +415,10 @@ void setup() {
 
   clutch->min = MIN_CLUTCH;
   clutch->max = MAX_CLUTCH;
-  #endif
+#else
+  gas->min = brake->min = clutch->min = MAX_AXIS;
+  gas->max = brake->max = clutch->max = 0;
+#endif
 
   gasPedal = gas;
   brakePedal = brake;
@@ -443,10 +472,4 @@ void loop() {
   // slow the output down a bit
   delay(500);
 #endif
-}
-
-void setColor(int red, int green, int blue) {
-  analogWrite(RED_PIN, red);
-  analogWrite(GREEN_PIN, green);
-  analogWrite(BLUE_PIN, blue);
 }
