@@ -474,16 +474,19 @@ void calib(struct Pedal *gas, Pedal *brake, Pedal *clutch, int shifter_X, int sh
       case RECORD_X_SHIFTER_56:
         CALIB_MIN(calibValue, shifter_X, calibration.data.shifter_x_56);
         break;
-      case RECORD_GAS:
-        CALIB_RANGE(calibValue, gas->cur, calibration.data.gasMin, calibration.data.gasMax);
-        break;
-      case RECORD_BRAKE:
-        CALIB_RANGE(calibValue, brake->cur, calibration.data.brakeMin, calibration.data.brakeMax);
-        break;
-      case RECORD_CLUTCH:         
-        CALIB_RANGE(calibValue, clutch->cur, calibration.data.clutchMin, calibration.data.clutchMax);
-        break;
     }
+  }
+  switch(currentMode)
+  {
+    case RECORD_GAS:
+      CALIB_RANGE(calibValue, gas->cur, calibration.data.gasMin, calibration.data.gasMax);
+      break;
+    case RECORD_BRAKE:
+      CALIB_RANGE(calibValue, brake->cur, calibration.data.brakeMin, calibration.data.brakeMax);
+      break;
+    case RECORD_CLUTCH:         
+      CALIB_RANGE(calibValue, clutch->cur, calibration.data.clutchMin, calibration.data.clutchMax);
+      break;
   }
 }
 

@@ -13,7 +13,7 @@ class Plotter:
         self.pedals = self.fig.add_subplot(gs[0])
         self.shifter = self.fig.add_subplot(gs[1])
         self.modes = RadioButtons(self.fig.add_subplot(gs[2]), ["Idle", "Shifter neutral zone", "Shifter 135 zone", "Shifter 246R zone", "Shifter 12 zone", "Shifter 35 zone", "Gas pedal (if not auto-calibrated)", "Brake pedal (if not auto-calibrated)", "Clutch pedal (if not auto-calibrated)"])
-        self.optionlist = ["Enable auto-calibration", "Invert brake pedal", "Enable pedals", "Enable shifter"]
+        self.optionlist = ["Enable pedal auto-calibration", "Invert brake pedal", "Enable pedals", "Enable shifter"]
         self.options = CheckButtons(self.fig.add_subplot(gs[3]), self.optionlist)
         self.btnSave = Button(self.fig.add_subplot(gs[4]), 'Save Calib to EEPROM')
         self.btnResetDefault = Button(self.fig.add_subplot(gs[5]), 'Reset Calib to default')
@@ -21,6 +21,13 @@ class Plotter:
         
         self.pp = self.pedals.bar(['gas','brake','clutch'], height=1023)
         self.pedals.set_ylim([0, 1023])
+        self.gasLimits = Rectangle( (-0.45, 0), 0.9, 1023, facecolor=(0.9,0.9,0.9,0.5), edgecolor='r')
+        self.brakeLimits = Rectangle( (0.55, 0), 0.9, 1023, facecolor=(0.9,0.9,0.9,0.5), edgecolor='r')
+        self.clutchLimits = Rectangle( (1.55, 0), 0.9, 1023, facecolor=(0.9,0.9,0.9,0.5), edgecolor='r')
+        self.pedals.add_patch(self.gasLimits)
+        self.pedals.add_patch(self.brakeLimits)
+        self.pedals.add_patch(self.clutchLimits)
+        
         self.pedals.set_title("Pedals")
         self.sp, = self.shifter.plot([0],[0], 'x')
         self.nz = Rectangle( (0,450), 1024, 100, facecolor=(0.9,0.9,0.9, 0.5), edgecolor='b' )
@@ -28,6 +35,7 @@ class Plotter:
         self.g246 = Rectangle( (0,450), 1024, 100, facecolor=(0.9,0.9,0.9, 0.5), edgecolor='g' )
         self.g12 = Rectangle( (0,0), 200, 1024, facecolor=(0.9,0.9,0.9, 0.5), edgecolor='m' )
         self.g56 = Rectangle( (823,0), 200, 1024, facecolor=(0.9,0.9,0.9, 0.5), edgecolor='y' )
+        
         self.shifter.add_patch(self.nz)
         self.shifter.add_patch(self.g135)
         self.shifter.add_patch(self.g246)
@@ -42,6 +50,13 @@ class Plotter:
               pedals_auto_calib, enable_pedals, enable_shifter, invert_brake, *args):
         for i, ppp in enumerate(self.pp):
             ppp.set_height([g,b,c][i])
+        self.gasLimits.set_y(gas0)
+        self.gasLimits.set_height(gas1-gas0)
+        self.brakeLimits.set_y(brake0)
+        self.brakeLimits.set_height(brake1-brake0)
+        self.clutchLimits.set_y(clutch0)
+        self.clutchLimits.set_height(clutch1-clutch0)
+            
         self.sp.set_xdata([sx])
         self.sp.set_ydata([sy])
         self.nz.set_y(n0)
@@ -55,7 +70,7 @@ class Plotter:
         self.g56.set_x(g56)
         self.g56.set_width(1024-g56)
 
-        for o,v in [("Enable auto-calibration", pedals_auto_calib),
+        for o,v in [("Enable pedal auto-calibration", pedals_auto_calib),
                     ("Invert brake pedal", invert_brake),
                     ("Enable pedals", enable_pedals),
                     ("Enable shifter", enable_shifter)]:
@@ -83,7 +98,7 @@ def main():
             }
         p.modes.on_clicked(lambda name: ser.write(name_to_mode[name]))
         option_to_cmd = {
-            "Enable auto-calibration" : (b"p", b"P"), 
+            "Enable pedal auto-calibration" : (b"p", b"P"), 
             "Invert brake pedal" : (b"x", b"X"),
             "Enable pedals" : (b"e", b"E"), 
             "Enable shifter" : (b"s", b"S"),
