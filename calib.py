@@ -4,21 +4,29 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 from matplotlib import gridspec
 from matplotlib.widgets import RadioButtons, CheckButtons, Button
+from matplotlib.text import Text
 import serial
 
 class Plotter:
     def __init__(self):
-        self.fig = plt.figure("G27 Pedals and Shifter", figsize=(10,8)) 
-        gs = gridspec.GridSpec(4, 2, width_ratios=[1, 1], height_ratios=[3,1,0.3,0.3]) 
+        self.fig = plt.figure("G27 Pedals and Shifter", figsize=(10,8), dpi=100) 
+        gs = gridspec.GridSpec(4, 2, width_ratios=[1, 1], height_ratios=[3,1.5,0.2,0.2]) 
         self.pedals = self.fig.add_subplot(gs[0])
         self.shifter = self.fig.add_subplot(gs[1])
-        self.modes = RadioButtons(self.fig.add_subplot(gs[2]), ["Idle", "Shifter neutral zone", "Shifter 135 zone", "Shifter 246R zone", "Shifter 12 zone", "Shifter 35 zone", "Gas pedal (if not auto-calibrated)", "Brake pedal (if not auto-calibrated)", "Clutch pedal (if not auto-calibrated)"])
+        self.modes = RadioButtons(self.fig.add_subplot(gs[2]), ["Idle", "Shifter neutral zone", "Shifter 135 zone", "Shifter 246R zone", "Shifter 12 zone", "Shifter 56 zone", "Gas pedal (if not auto-calibrated)", "Brake pedal (if not auto-calibrated)", "Clutch pedal (if not auto-calibrated)"])
         self.optionlist = ["Enable pedal auto-calibration", "Invert brake pedal", "Enable pedals", "Enable shifter"]
         self.options = CheckButtons(self.fig.add_subplot(gs[3]), self.optionlist)
         self.btnSave = Button(self.fig.add_subplot(gs[4]), 'Save Calib to EEPROM')
         self.btnResetDefault = Button(self.fig.add_subplot(gs[5]), 'Reset Calib to default')
         self.btnResetEEPROM = Button(self.fig.add_subplot(gs[7]), 'Reset Calib to EEPROM')
-        
+        self.ahelp = plt.text(  # position text relative to Figure
+            0.01, 0.03, '',
+            ha='left', va='bottom',
+            transform=self.fig.transFigure,
+            fontsize="large",
+            fontweight="bold",
+            color=(0.7,0.0, 0.0),
+        )        
         self.pp = self.pedals.bar(['gas','brake','clutch'], height=1023)
         self.pedals.set_ylim([0, 1023])
         self.gasLimits = Rectangle( (-0.45, 0), 0.9, 1023, facecolor=(0.9,0.9,0.9,0.5), edgecolor='r')
@@ -91,12 +99,57 @@ def main():
             "Shifter 135 zone": b'u', 
             "Shifter 246R zone": b'b', 
             "Shifter 12 zone": b'l', 
-            "Shifter 35 zone": b'r',
+            "Shifter 56 zone": b'r',
             "Gas pedal (if not auto-calibrated)": b"G", 
             "Brake pedal (if not auto-calibrated)": b"B", 
             "Clutch pedal (if not auto-calibrated)": b"C",
             }
-        p.modes.on_clicked(lambda name: ser.write(name_to_mode[name]))
+        name_to_help = {
+            "Idle": """\
+Choose a calibration value from the list and follow the
+giben instructions. The IDLE mode doesn't perform any
+calibration.""",
+            "Shifter neutral zone": """\
+Press left red button on shifter and move the shifter in 
+the neutral zone as much as possible.""",
+            "Shifter 135 zone": """\
+Set shifter to 3rd gear. Afterwards press left red button 
+and move shifter upwards and downwards as much as possible
+while still staying in 3rd. Release left red button.
+Optionally do the same with 1st and 5th gear.""",
+            "Shifter 246R zone": """\
+Set shifter in 4th gear. Afterwards press left red button 
+and move shifter upwards and downwards as much as possible
+while still staying in 4th. Release left red button.
+Optionally do the same with 2nd and 6th gear.""",
+            "Shifter 12 zone": """\
+Set shifter in 1st gear. Afterwards press left red button
+and move shifter to the right as much as possible. Release
+left red button. Optionally repeat with 2nd gear.""",
+            "Shifter 56 zone": """\
+Set shifter in 5th gear. Afterwards press left red button
+and move shifter to the left as much as possible. Release
+left red button. Optionally repeat with 6th gear.""",
+            "Gas pedal (if not auto-calibrated)": """\
+Fully press and release the gas/throttle pedal multiple 
+times. This calibration is not used when in auto-calib
+mode.""",
+            "Brake pedal (if not auto-calibrated)": """\
+Fully press and release the brake pedal multiple 
+times. This calibration is not used when in auto-calib
+mode.""",
+            "Clutch pedal (if not auto-calibrated)": """\
+Fully press and release the clutch pedal multiple 
+times. This calibration is not used when in auto-calib
+mode.""",
+        }
+        
+        def setMode(name):
+            ser.write(name_to_mode[name])
+            p.ahelp.set_text(name_to_help[name])
+        setMode("Idle")
+            
+        p.modes.on_clicked(setMode)
         option_to_cmd = {
             "Enable pedal auto-calibration" : (b"p", b"P"), 
             "Invert brake pedal" : (b"x", b"X"),

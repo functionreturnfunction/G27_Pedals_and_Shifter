@@ -8,6 +8,8 @@
 #include <EEPROM.h>
 #include "./src/G27PedalsShifter.h"
 
+//#define REVERSE_HACK
+
 // LED PINS
 #define RED_PIN    3
 #define GREEN_PIN  5
@@ -275,7 +277,7 @@ void getShifterPosition(int *ret) {
 int getCurrentGear(int shifterPosition[], int btns[]) {
   static int gear = 0;  // default to neutral
   int x = shifterPosition[0], y = shifterPosition[1];
-
+  
   if (y < calibration.data.shifter_y_neutralMax && y > calibration.data.shifter_y_neutralMin)
   {
     gear = 0;
@@ -313,7 +315,11 @@ int getCurrentGear(int shifterPosition[], int btns[]) {
       }
     } else if ( x >= calibration.data.shifter_x_56 )
     {
+#ifdef REVERSE_HACK
       if( btns[BUTTON_RED_RIGHT] ) /* hack for broken revers sensor */
+#else
+      if( btns[BUTTON_REVERSE] )
+#endif
       {
         if( gear != 4 && gear != 6 ) /* avoid toggles between neighboring gears */
         {
@@ -334,6 +340,8 @@ int getCurrentGear(int shifterPosition[], int btns[]) {
       }
     }
   }
+  // reset button if we are not in reverse gear (this was there in original code, not sure if it's needed)
+  if (gear != 7) btns[BUTTON_REVERSE] = 0;
 
   return gear;
 }
