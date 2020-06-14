@@ -7,6 +7,7 @@
 #include <HID.h>
 #include <EEPROM.h>
 #include "./src/G27PedalsShifter.h"
+#include "./src/Filter.h"
 
 //#define REVERSE_HACK
 
@@ -82,33 +83,41 @@
 
 #define CALIB_DATA_MAGIC_NUMBER 0x27CA11B1 // change this when the struct definition changes
 
+typedef struct CalibData
+{
+  /* magic number, used for testing valid EEPROM content */
+  uint32_t calibID;
+  /* bool whether to automatically calibrate the pedals at a power cycle or use a static calibration */
+  uint8_t pedals_auto_calib; 
+  /* bool whether to invert the brake pedal */
+  uint8_t invert_brake;
+  /* bool whether to use the pedals */
+  uint8_t use_pedals;
+  /* bool whether to use the shifter */
+  uint8_t use_shifter;
+  /* size of median filter to filter pedal values */
+  uint8_t pedal_median_size;
+  /* size of median filter to filter shifter values */
+  uint8_t shifter_median_size;
+  /* only meaningful if pedals_auto_calib is 0 */
+  uint16_t gasMin, gasMax, brakeMin, brakeMax, clutchMin, clutchMax;
+  /* defines the neutral zone of the y shifter hysteresis */
+  uint16_t shifter_y_neutralMin, shifter_y_neutralMax;
+  /* defines the 246R zone of the y shifter hysteresis, should be less than shifter_y_neutralMin */
+  uint16_t shifter_y_246R_gearZone;
+  /* defines the 135 zone of the y shifter hysteresis, should be greater than shifter_y_neutralMax */
+  uint16_t shifter_y_135_gearZone;
+  /* threshold for gears 1 and 2 of the x shifter, should be less than shifter_x_56 */
+  uint16_t shifter_x_12;
+  /* threshold for gears 5,6 and R of the x shifter, should be greater than shifter_x_12 */
+  uint16_t shifter_x_56;  
+} CalibData;
+
 /* this structure holds the calibration data stored in EEPROM */
 typedef struct calibration
 {
-    struct {
-        /* magic number, used for testing valid EEPROM content */
-        int32_t calibID;
-        /* bool whether to automatically calibrate the pedals at a power cycle or use a static calibration */
-        uint8_t pedals_auto_calib; 
-        /* bool whether to invert the brake pedal */
-        uint8_t invert_brake;
-        /* bool whether to use the pedals */
-        uint8_t use_pedals;
-        /* bool whether to use the shifter */
-        uint8_t use_shifter;
-        /* only meaningful if pedals_auto_calib is 0 */
-        uint16_t gasMin, gasMax, brakeMin, brakeMax, clutchMin, clutchMax;
-        /* defines the neutral zone of the y shifter hysteresis */
-        uint16_t shifter_y_neutralMin, shifter_y_neutralMax;
-        /* defines the 246R zone of the y shifter hysteresis, should be less than shifter_y_neutralMin */
-        uint16_t shifter_y_246R_gearZone;
-        /* defines the 135 zone of the y shifter hysteresis, should be greater than shifter_y_neutralMax */
-        uint16_t shifter_y_135_gearZone;
-        /* threshold for gears 1 and 2 of the x shifter, should be less than shifter_x_56 */
-        uint16_t shifter_x_12;
-        /* threshold for gears 5,6 and R of the x shifter, should be greater than shifter_x_12 */
-        uint16_t shifter_x_56;
-    } data;
+    /* the actual calibration struct */
+    CalibData data;
     /* CRC checksum */
     uint32_t crc;
 } Calibration;
@@ -120,6 +129,8 @@ static Calibration calibDefault = {
         0, /* invert brake */
         1, /* use pedals */
         1, /* use shifter */
+        0, /* pedals median size */
+        0, /* shifter median size */
         0,0,0,0,0,0, /* calibrated pedal values */
         1024/2 - 1024/10, 1024/2 + 1024/10, /* shifter_y_neutral */
         1024/2 - 1024/3, 1024/2 + 1024/3,   /* shifter_y_gearZone */
@@ -200,10 +211,9 @@ int axisValue(void* in) {
   return result;
 }
 
-void processPedal(void* in) {
-  Pedal* input = (Pedal*)in;
-
-  input->cur = analogRead(input->pin);
+void processPedal(struct Pedal* input, SignalFilter *flt, uint8_t filterSize) 
+{
+  input->cur = apply_filter(flt, filterSize, analogRead(input->pin));
 
   if(calibration.data.pedals_auto_calib)
   {
@@ -368,6 +378,19 @@ void setButtonStates(int buttons[], int gear) {
       CALIB_MIN(calibValue, curValue, minValue); \
       CALIB_MAX(calibValue, curValue, maxValue); }
 
+typedef struct DebugStruct
+{
+  uint8_t sizeInBytes;
+  uint8_t calibButton;
+  int16_t axisValues[5];
+  CalibData calib;
+  uint16_t numCrcErrors;
+  uint16_t numMagicNumErrors;
+  uint32_t profiling[4];
+} DebugStruct;
+
+static DebugStruct debug = {0};
+
 void calib(struct Pedal *gas, Pedal *brake, Pedal *clutch, int shifter_X, int shifter_Y, int calibButton) 
 {
   static uint8_t printMode = 0;
@@ -389,6 +412,18 @@ void calib(struct Pedal *gas, Pedal *brake, Pedal *clutch, int shifter_X, int sh
       RESET_SHIFTER_ENABLED = 's',
       SET_BRAKE_INVERTED = 'X',
       RESET_BRAKE_INVERTED = 'x',
+      SET_PEDAL_FILTSIZE_OFF = '0',
+      SET_PEDAL_FILTSIZE_3 = '3',
+      SET_PEDAL_FILTSIZE_5 = '5',
+      SET_PEDAL_FILTSIZE_7 = '7',
+      SET_PEDAL_FILTSIZE_9 = '9',
+      SET_PEDAL_FILTSIZE_15 = 'f',
+      SET_SHIFTER_FILTSIZE_OFF = '1',
+      SET_SHIFTER_FILTSIZE_3 = '2',
+      SET_SHIFTER_FILTSIZE_5 = '4',
+      SET_SHIFTER_FILTSIZE_7 = '6',
+      SET_SHIFTER_FILTSIZE_9 = '8',
+      SET_SHIFTER_FILTSIZE_15 = 'F',      
       SET_PRINT_MODE = 'O',
       RESET_PRINT_MODE = 'o',
       STORE_CALIB = 'w',
@@ -418,6 +453,18 @@ void calib(struct Pedal *gas, Pedal *brake, Pedal *clutch, int shifter_X, int sh
       case RESET_SHIFTER_ENABLED: calibration.data.use_shifter = 0; break;
       case SET_BRAKE_INVERTED: calibration.data.invert_brake = 1; break;
       case RESET_BRAKE_INVERTED: calibration.data.invert_brake = 0; break;
+      case SET_PEDAL_FILTSIZE_OFF: calibration.data.pedal_median_size = 0; break;
+      case SET_PEDAL_FILTSIZE_3: calibration.data.pedal_median_size = 3; break;
+      case SET_PEDAL_FILTSIZE_5: calibration.data.pedal_median_size = 5; break;
+      case SET_PEDAL_FILTSIZE_7: calibration.data.pedal_median_size = 9; break;
+      case SET_PEDAL_FILTSIZE_9: calibration.data.pedal_median_size = 15; break;
+      case SET_PEDAL_FILTSIZE_15: calibration.data.pedal_median_size = 49; break;
+      case SET_SHIFTER_FILTSIZE_OFF: calibration.data.shifter_median_size = 0; break;
+      case SET_SHIFTER_FILTSIZE_3: calibration.data.shifter_median_size = 3; break; 
+      case SET_SHIFTER_FILTSIZE_5: calibration.data.shifter_median_size = 5; break;
+      case SET_SHIFTER_FILTSIZE_7: calibration.data.shifter_median_size = 9; break;
+      case SET_SHIFTER_FILTSIZE_9: calibration.data.shifter_median_size = 15; break;
+      case SET_SHIFTER_FILTSIZE_15: calibration.data.shifter_median_size = 49; break;
       case SET_PRINT_MODE: printMode = 1; break;
       case RESET_PRINT_MODE: printMode = 0;; break;
       case STORE_CALIB:
@@ -434,34 +481,20 @@ void calib(struct Pedal *gas, Pedal *brake, Pedal *clutch, int shifter_X, int sh
   }
   if(printMode)
   {
-    Serial.print(calibButton); Serial.print(" ");
-    Serial.print(shifter_X); Serial.print(" ");
-    Serial.print(shifter_Y); Serial.print(" ");
-    Serial.print(gas->cur); Serial.print(" ");
-    Serial.print(brake->cur); Serial.print(" ");
-    Serial.print(clutch->cur); Serial.print(" ");
-    Serial.print(calibration.data.shifter_y_135_gearZone); Serial.print(" ");
-    Serial.print(calibration.data.shifter_y_246R_gearZone); Serial.print(" ");
-    Serial.print(calibration.data.shifter_y_neutralMin); Serial.print(" ");
-    Serial.print(calibration.data.shifter_y_neutralMax); Serial.print(" ");
-    Serial.print(calibration.data.shifter_x_12); Serial.print(" ");
-    Serial.print(calibration.data.shifter_x_56); Serial.print(" ");
-    Serial.print(calibration.data.gasMin); Serial.print(" ");
-    Serial.print(calibration.data.gasMax); Serial.print(" ");
-    Serial.print(calibration.data.brakeMin); Serial.print(" ");
-    Serial.print(calibration.data.brakeMax); Serial.print(" ");
-    Serial.print(calibration.data.clutchMin); Serial.print(" ");
-    Serial.print(calibration.data.clutchMax); Serial.print(" ");
-    Serial.print(calibration.data.pedals_auto_calib); Serial.print(" ");
-    Serial.print(calibration.data.use_pedals); Serial.print(" ");
-    Serial.print(calibration.data.use_shifter); Serial.print(" ");
-    Serial.print(calibration.data.invert_brake); Serial.print(" ");
-    Serial.print(crcError); Serial.print(" ");
-    Serial.print(magicNumberError); Serial.print(" ");
-    Serial.print(lastCrcFromEEPROM); Serial.print(" ");
-    Serial.print(lastCrcFromContents); Serial.print(" ");
-    Serial.print("                    \n");
-    delay(1); /* delay 1 ms */
+    debug.sizeInBytes = sizeof(debug);
+    debug.calibButton = calibButton;
+    debug.axisValues[0] = shifter_X;
+    debug.axisValues[1] = shifter_Y;
+    debug.axisValues[2] = gas->cur;
+    debug.axisValues[3] = brake->cur;
+    debug.axisValues[4] = clutch->cur;
+    debug.calib = calibration.data;
+    debug.numCrcErrors = crcError;
+    debug.numMagicNumErrors = magicNumberError;
+    debug.profiling[3] = micros();
+    uint16_t s = sizeof(debug);
+    Serial.write((const byte*)&debug, sizeof(debug));    
+    debug.profiling[0] = debug.profiling[3];
   }
   if(calibButton)
   {
@@ -499,7 +532,7 @@ void calib(struct Pedal *gas, Pedal *brake, Pedal *clutch, int shifter_X, int sh
 }
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(460800);
 
   // lights
   pinMode(RED_PIN, OUTPUT);
@@ -545,11 +578,14 @@ void setup() {
   clutchPedal = clutch;
 }
 
+SignalFilter signalFilters[5];
+
 void loop() {
+  debug.profiling[2] = micros();
   // pedals
-  processPedal(gasPedal);
-  processPedal(brakePedal);
-  processPedal(clutchPedal);
+  processPedal(gasPedal, &signalFilters[0], calibration.data.pedal_median_size);
+  processPedal(brakePedal, &signalFilters[1], calibration.data.pedal_median_size);
+  processPedal(clutchPedal, &signalFilters[2], calibration.data.pedal_median_size);
 
   if(calibration.data.invert_brake )
   {
@@ -567,8 +603,12 @@ void loop() {
   // shifter
   int buttonStates[16];
   getButtonStates(buttonStates);
+  
   int shifterPosition[2];
   getShifterPosition(shifterPosition);
+  shifterPosition[0] = apply_filter(&signalFilters[3], calibration.data.shifter_median_size, shifterPosition[0]);
+  shifterPosition[1] = apply_filter(&signalFilters[4], calibration.data.shifter_median_size, shifterPosition[1]);
+  
   int gear = getCurrentGear(shifterPosition, buttonStates);
 
   if(calibration.data.use_shifter)
@@ -578,4 +618,5 @@ void loop() {
 
   calib(gasPedal, brakePedal, clutchPedal, shifterPosition[0], shifterPosition[1], buttonStates[BUTTON_RED_LEFT]);
   G27.sendState();
+  debug.profiling[1] = micros();
 }
