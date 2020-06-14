@@ -3,6 +3,7 @@ import ctypes as ct
 import sys
 import time
 import threading
+import traceback
 from PySide2.QtCore import QRectF, Qt, QObject, QThread, Signal, QMutex, QMutexLocker, QTimer, QSignalBlocker
 from PySide2.QtGui import QBrush, QPen, QColor
 from PySide2.QtWidgets import (QApplication, QWidget, QGroupBox, QLabel, QGridLayout, QVBoxLayout, QRadioButton,
@@ -113,7 +114,28 @@ class G27CalibGui(QWidget):
                     ["Idle", "Shifter neutral zone", "Shifter 135 zone", "Shifter 246R zone", "Shifter 12 zone",
                     "Shifter 56 zone", "Gas pedal (if not auto-calibrated)", "Brake pedal (if not auto-calibrated)",
                     "Clutch pedal (if not auto-calibrated)"]]
+        self.mode_btns[0].setChecked(True)
         self.mode_cmds = [b"i", b"n", b"u", b"b", b"l", b"r", b"G", b"B", b"C"]
+        self.help_cmds = [
+            "First decide about the filtering needed (in middle panel). If there is a lot of noise in the signal, "
+                "maybe because of old pots, you might want to use a multi-sample median filter. Note that this filter "
+                "introduces some delay, so you want to keep the numbers reasonable low. Afterwards, iterate through "
+                "the calibration values in the left panel.\n\n"
+                "When you're done, you can save the calibration in the right panel to the EEPROM.",
+            "Put the shifter in neutral position. Afterwards, keep the left red button pressed and move the "
+                "shifter while still in neutral. When reaching the calibrated area, the gear will be set to neutral.",
+            "Put the shifter in 3rd gear. Afterwards keep the left red button pressed and move the shifter "
+                "while still in 3rd gear. When done, release the red button. Optionally repeat for gears 1st and 5th.",
+            "Put the shifter in 4th gear. Afterwards keep the left red button pressed and move the shifter "
+                "while still in 4th gear. When done, release the red button. Optionally repeat for gears 2nd and 6th.",
+            "Put the shifter in 1st gear. Afterwards keep the left red button pressed and move the shifter "
+                "while still in 1st gear. When done, release the red button. Optionally repeat for 2nd gear.",
+            "Put the shifter in 5th gear. Afterwards keep the left red button pressed and move the shifter "
+                "while still in 5th gear. When done, release the red button. Optionally repeat for 6th gear.",
+            "Move the gas pedal multiple times between lowest and highest position.",
+            "Move the brake pedal multiple times between lowest and highest position.",
+            "Move the clutch pedal multiple times between lowest and highest position."
+        ]
         for b in self.mode_btns:
             vbox.addWidget(b)
             b.toggled.connect(self.modeChanged)
@@ -156,6 +178,14 @@ class G27CalibGui(QWidget):
             b.clicked.connect(self.persistent_cmd)
         self.tl_layout.addWidget(cbtn_persistent, 0, 2, 1, 1)
 
+        self.helpArea = QLabel(self.help_cmds[0], self)
+        self.helpArea.setWordWrap(True)
+        f = self.helpArea.font()
+        f.setBold(True)
+        f.setPointSizeF(f.pointSizeF()*1.5)
+        self.helpArea.setFont(f)
+        self.tl_layout.addWidget(self.helpArea, 0, 3, 1, 1)
+
         shifter_label = QLabel("Shifter")
         self.tl_layout.addWidget(shifter_label, 1,2,1,2,alignment=Qt.AlignHCenter)
         shifter_plot = pg.PlotWidget(parent=self)
@@ -164,23 +194,23 @@ class G27CalibGui(QWidget):
         shifter_plot.setRange(QRectF(0,0,1023,1023), padding=0)
         pi = shifter_plot.getPlotItem()
         self.shifter_neutral_plot = pg.LinearRegionItem(values = (400, 600), orientation='horizontal', movable=False,
-                                                        brush = QBrush(QColor(200,200,200,50)),
+                                                        brush = QBrush(QColor(200,50,50,50)),
                                                         pen=QPen(QColor(200,50,50)))
         shifter_plot.addItem(self.shifter_neutral_plot)
         self.shifter_135_plot = pg.LinearRegionItem(values = (800, 1024), orientation='horizontal', movable=False,
-                                                    brush = QBrush(QColor(200,200,200,50)),
+                                                    brush = QBrush(QColor(50,200,50,50)),
                                                     pen = QPen(QColor(50,200,50)))
         shifter_plot.addItem(self.shifter_135_plot)
         self.shifter_246_plot = pg.LinearRegionItem(values = (0, 200), orientation='horizontal', movable=False,
-                                                    brush = QBrush(QColor(200,200,200,50)),
+                                                    brush = QBrush(QColor(50,50,200,50)),
                                                     pen = QPen(QColor(50,50,200)))
         shifter_plot.addItem(self.shifter_246_plot)
         self.shifter_12_plot = pg.LinearRegionItem(values = (0, 200), orientation='vertical', movable=False,
-                                                    brush = QBrush(QColor(200,200,200,50)),
+                                                    brush = QBrush(QColor(50,200,200,50)),
                                                     pen = QPen(QColor(50,200,200)))
         shifter_plot.addItem(self.shifter_12_plot)
         self.shifter_56_plot = pg.LinearRegionItem(values = (800, 1024), orientation='vertical', movable=False,
-                                                    brush = QBrush(QColor(200,200,200,50)),
+                                                    brush = QBrush(QColor(200,200,50,50)),
                                                     pen = QPen(QColor(200,200,50)))
         shifter_plot.addItem(self.shifter_56_plot)
         self.shifter_pos_plot = pi.plot(x=[512], y=[512], symbol='+', pen=None)
@@ -208,6 +238,7 @@ class G27CalibGui(QWidget):
             o = self.sender()
             idx = self.mode_btns.index(o)
             self.sendModeCmd.emit(self.mode_cmds[idx])
+            self.helpArea.setText(self.help_cmds[idx])
 
     def optionChanged(self, option):
         o = self.sender()
@@ -242,7 +273,7 @@ class G27CalibGui(QWidget):
             self.shifter_135_plot.setRegion((values.calib.shifter_y_135_gearZone, 1024))
             self.shifter_246_plot.setRegion((0, values.calib.shifter_y_246R_gearZone))
             self.shifter_12_plot.setRegion((0, values.calib.shifter_x_12))
-            self.shifter_56_plot.setRegion((0, values.calib.shifter_x_56))
+            self.shifter_56_plot.setRegion((values.calib.shifter_x_56, 1024))
 
             blockers = []
             for b in self.option_btns:
@@ -277,7 +308,7 @@ class Collector(QObject):
 
     def sendModeCmd(self, cmd):
         self.serialPort.write(cmd)
-        print("Sent CMD: ", cmd)
+        #print("Sent CMD: ", cmd)
 
     def create(self):
         try:
@@ -291,7 +322,7 @@ class Collector(QObject):
             self.timer.setInterval(0)
             self.timer.start()
         except Exception as e:
-            print(e)
+            traceback.print_exc()
 
     def readFromSerial(self):
         try:
@@ -317,12 +348,16 @@ class Collector(QObject):
             self.values.update(dbg)
             self.valuesChanged.emit(self.values, dbg)
         except Exception as e:
-            print(e)
+            traceback.print_exc()
 
 def create_joystick_sink():
     def consume_joystick_events(dev):
-        for event in dev:
-            pass
+        while 1:
+            try:
+                for event in dev:
+                    time.sleep(0.01)
+            except:
+                time.sleep(0.01)
     threads = []
     for d in inputs.devices.gamepads:
         threads.append(threading.Thread(target=consume_joystick_events, args=(d,), daemon=True))
@@ -336,6 +371,7 @@ def main():
 
     app = QApplication(sys.argv)
     main = QWidget()
+    main.setWindowTitle("G27 Pedalsand Shifter - serial port")
     layout = QGridLayout(main)
     layout.addWidget(QLabel("Select Arduino COM port:", main),0,0)
     ttyCombo = QComboBox(main)
@@ -350,22 +386,27 @@ def main():
     btnRefresh = QPushButton("Refresh Devices")
     btnRefresh.clicked.connect(refresh)
     layout.addWidget(btnRefresh, 0, 2)
+
+    vars = {}
     def createGui(idx):
+        nonlocal vars
         tty = ttyCombo.itemText(idx)
         if tty == "":
             return
         gui = G27CalibGui()
+        gui.setMinimumSize(1024, 700)
+        gui.setWindowTitle("G27 Pedalsand Shifter")
         coll = Collector(tty)
         coll.valuesChanged.connect(gui.newVals)
         gui.sendModeCmd.connect(coll.sendModeCmd)
         gui.show()
         main.hide()
+        vars["gui"] = gui
+        vars["coll"] = coll
 
     ttyCombo.currentIndexChanged.connect(createGui)
     main.show()
     return  app.exec_()
-
-
 
 if __name__ == "__main__":
     main()
