@@ -426,7 +426,10 @@ def main():
         gui.setWindowTitle("G27 Pedalsand Shifter")
         coll = Collector(vars["tty"])
         coll.valuesChanged.connect(gui.newVals)
-        js = JoystickSink(vars["jsdev"])
+        if vars["jsdev"] is not None:
+            js = JoystickSink(vars["jsdev"])
+        else:
+            js = None
         gui.sendModeCmd.connect(coll.sendModeCmd)
         gui.show()
         if main_widget is not None: main_widget.hide()
@@ -455,7 +458,7 @@ def main():
             for i,d in enumerate(inputs.devices.gamepads):
                 jsCombo.addItem(d.name, userData=d)
                 k += 1
-            btnStart.setEnabled(n > 0 and k > 0)
+            btnStart.setEnabled(n > 0)
         def startgui():
             idx = ttyCombo.currentIndex()
             vars["tty"] = ttyCombo.itemText(ttyCombo.currentIndex())
