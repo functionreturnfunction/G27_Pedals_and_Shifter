@@ -20,10 +20,28 @@ NOTE: when wiring the male connector for the shifter, remember that the pins wil
 
 ## Firmware
 
-Open the .ino file in the Arduino IDE, select the proper board type and COM port under "Tools" (you will need to install the [SparkFun board library](https://github.com/sparkfun/Arduino_Boards)).  You will probably need to adjust the thresholds for SHIFTER_XAXIS_12 and friends, the values that decide which gear you're in based on the x/y axis of the shifter.  Uncomment the `#define DEBUG_SHIFTER true` line near the top to get debugging information to aid in this process.
+Open the .ino file in the Arduino IDE, select the proper board type and COM port under "Tools" (you will need to install the [SparkFun board library](https://github.com/sparkfun/Arduino_Boards)). 
 
 ## Calibration and Configration
 
-The pedals are self-calibrating, meaning the system determines the min/max value for each pedal in realtime.  What this means is that each time the device is powered on, you'll need to push each of the three pedals all the way to the floor once to let it know what the maximums are.
+After the firmware has been uploaded to the arduino, you want to calibrate and configure the SW for your specific device. There is a python-based graphical user interface available in this project. 
 
-When configuring the shifter and buttons, gears 1 - 6 are buttons 1 - 6, reverse is button 7, and then the rest of the buttons enumerate from there starting from the top black button.
+### GUI installation
+This description assumes a windows operating system. Other operating systems are similar. You need python for running this GUI, I suggest to get the interpreter at http://winpython.github.io/. I'd choose the minimal python 3.7 64 bit version, but other versions or distributions should also work. When you have a python interpreter in place, I suggest to create a virtual environment using the shell commands:
+    
+    cd <a path of your choice>
+    python -m venv g27calib
+
+This command creates a virtual python environment in the directory g27calib. Afterwards you can install the GUI with (assuming Windows platform)
+
+    .\g27calib\Scripts\pip install -e git+https://github.com/n-e-y-s/G27_Pedals_and_Shifter@n-e-y-s_devel#egg=G27_Pedals_and_Shifter_GUI
+
+The python packager downloads some stuff from the internet and finally you are able to start
+
+    g27calib/Scripts/g27calib
+    
+and the gui should open.
+
+### Calibration process
+
+TODO
