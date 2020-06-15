@@ -47,11 +47,11 @@ and the gui should open.
 
 At first you need to select the Arduino serial device. On linux platforms, it is also necessary to select the joystick device of the G27, otherwise the GUI might be very slow:
 
-[device selector](screenshots/device_selector.png)
+![device selector](screenshots/device_selector.png)
 
 When everything is set correctly, press the Start button. You are presented with the calibration/configurtion GUI:
 
-[gui screenshot](screenshots/gui_in_action.png)
+![gui screenshot](screenshots/gui_in_action.png)
 
 On the upper right, you get some help text about what to do next. Using that everything shall be pretty self-explaining. The graphs in the lower part are for the pedals and the shifter respectively. You see the measurements over the last second depicted with the "+" marks. 
 
