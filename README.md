@@ -2,8 +2,8 @@
 
 Arduino-based USB interface for Logitech G27 pedals and shifter:
 
-![on breadboard](https://raw.githubusercontent.com/functionreturnfunction/G27_Pedals_and_Shifter/master/Breadboard.jpg)
-![in altoids tin](https://raw.githubusercontent.com/functionreturnfunction/G27_Pedals_and_Shifter/master/Altoids Tin.jpg)
+![on breadboard](Breadboard.jpg)
+![in altoids tin](Altoids&#32;Tin.jpg)
 
 ## Required Parts/Materials
 
