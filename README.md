@@ -1,3 +1,7 @@
+# NOTE!
+
+This project has not been updated in quite a while, as I've moved on from the G27 pedals and shifter.  I recommend checking out n-e-y-s' fork for active development, which a calibration GUI: https://github.com/n-e-y-s/G27_Pedals_and_Shifter/tree/n-e-y-s_devel
+
 # G27 Pedals and Shifter
 
 Arduino-based USB interface for Logitech G27 pedals and shifter:
